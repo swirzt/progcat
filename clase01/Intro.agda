@@ -361,10 +361,14 @@ inv3 = (0 ∷ 0 ∷ 1 ∷ [])
 test4 : Matrix 3 3
 test4 = inv3 *mm inv3
 
+appendCol : {n m : ℕ} → Vector m → Matrix m n → Matrix m (suc n)
+appendCol [] [] = emptymat
+appendCol (x ∷ xs) (ms ∷ mss) = (x ∷ ms) ∷ appendCol xs mss
+
 {- Ej: transposición de matrices -}
 transpose : {n m : ℕ} → Matrix m n → Matrix n m
 transpose [] = emptymat
-transpose (m ∷ ms) = appV (λ x → {!   !}) (transpose ms)
+transpose (m ∷ ms) = appendCol m (transpose ms)
 
 ej5 : Matrix 3 3
 ej5 = ( 0 ∷ 1 ∷ 2 ∷ [])
