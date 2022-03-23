@@ -312,8 +312,8 @@ test1 : Vector 3
 test1 = 2 *v v1
 
 empty : ∀{n A} → A → Vec A n
-empty {0} _ = []
-empty {suc n} x = x ∷ empty x
+empty {zero} _ = []
+empty {suc _} x = x ∷ empty x
 
 emptyvec : {n : ℕ} → Vector n
 emptyvec = empty 0
