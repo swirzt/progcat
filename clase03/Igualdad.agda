@@ -99,10 +99,10 @@ subst P {a} {.a} refl x = x
 {- Probar sym y trans usando subst -}
 
 sym' : {A : Set} → {a b : A} → a ≡ b → b ≡ a
-sym' {a = a} p = subst {!!} {!!} {!!}
+sym' {a = a} p = subst (λ x → x ≡ a) p refl
 
 trans' : {A : Set}{a b c : A} → a ≡ b → b ≡ c → a ≡ c
-trans' {a = a} ab bc = subst {!!} {!!} {!!}
+trans' {c = c} ab bc = subst (λ x → x ≡ c) (sym' ab) bc
 
 --------------------------------------------------
 
@@ -173,16 +173,56 @@ suma-equiv' x (suc y) =
 intentar que la prueba sea legible usando ≡-Reasoning
 -}
 +-comm : (m n : ℕ) → m + n ≡ n + m
-+-comm m n = {!!}
++-comm m zero = +0 m
++-comm m (suc n) = begin
+                   m + (suc n) 
+                   ≡⟨ +suc m n ⟩
+                   suc (m + n)
+                   ≡⟨ cong suc (+-comm m n) ⟩
+                   suc (n + m)
+                   ≡⟨ refl ⟩
+                   (suc n) + m 
+                   ∎
 
 +-assoc : (m n l : ℕ) → m + (n + l) ≡ (m + n) + l
-+-assoc m n l = {!!}
++-assoc m zero l = begin
+                   m + (zero + l)
+                   ≡⟨ cong (_+_ m) (0+ l) ⟩
+                   m + l
+                   ≡⟨ cong (λ x → x + l) (sym (+0 m)) ⟩ 
+                   (m + zero) + l
+                   ∎
++-assoc m (suc n) l = begin
+                      m + (suc n + l)
+                      ≡⟨ +suc m (n + l) ⟩ 
+                      suc (m + (n + l))
+                      ≡⟨ cong suc (+-assoc m n l) ⟩ 
+                      suc (m + n + l)
+                      ≡⟨ refl ⟩ 
+                      (suc (m + n) + l)
+                      ≡⟨ cong (λ x → x + l) (sym (+suc m n)) ⟩ 
+                      (m + suc n) + l
+                      ∎
 
 *0 : ∀ m → 0 ≡ m * 0
-*0 m = {!   !}
+*0 zero = refl
+*0 (suc m) = *0 m
 
 *suc : (m n : ℕ) → m + m * n ≡ m * suc n
-*suc m n = {!   !} 
+*suc zero n = refl
+*suc (suc m) n = begin
+                 (suc m) + (suc m * n) 
+                 ≡⟨ refl ⟩ 
+                 suc (m + (n + m * n))
+                 ≡⟨ cong (λ x → suc x) (+-assoc m n (m * n)) ⟩ 
+                 (suc (m + n) + m * n)
+                 ≡⟨ {!   !} ⟩ 
+                 {!   !}
+                 ≡⟨ {!   !} ⟩ 
+                 {!   !}
+                 ≡⟨ {!   !} ⟩ 
+                 {!   !}
+                 ∎
 
 *-comm : (m n : ℕ) → m * n ≡ n * m
 *-comm m n = {!   !}
