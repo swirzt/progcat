@@ -360,7 +360,7 @@ RAA→TerEx : RAA → TerEx
 RAA→TerEx raa = raa (λ npnp → npnp (right (λ p → npnp (left p))))
 
 TerEx→RND : TerEx → RAA
-TerEx→RND  = {!   !}
+TerEx→RND terex = case (λ p nnp → p) (λ np nnp → efq (nnp np)) terex
 
 ret¬¬ : {P : prop} → P → ¬¬ P
 ret¬¬ p = λ np → np p

@@ -208,6 +208,9 @@ intentar que la prueba sea legible usando ≡-Reasoning
 *0 zero = refl
 *0 (suc m) = *0 m
 
+0* : ∀ m → 0 ≡ 0 * m
+0* m = refl
+
 *suc : (m n : ℕ) → m + m * n ≡ m * suc n
 *suc zero n = refl
 *suc (suc m) n = begin
@@ -216,16 +219,32 @@ intentar que la prueba sea legible usando ≡-Reasoning
                  suc (m + (n + m * n))
                  ≡⟨ cong (λ x → suc x) (+-assoc m n (m * n)) ⟩ 
                  (suc (m + n) + m * n)
-                 ≡⟨ {!   !} ⟩ 
-                 {!   !}
-                 ≡⟨ {!   !} ⟩ 
-                 {!   !}
-                 ≡⟨ {!   !} ⟩ 
-                 {!   !}
+                 ≡⟨ cong (λ x → suc x + m * n) (+-comm m n) ⟩ 
+                 suc (n + m + m * n)
+                 ≡⟨ refl ⟩ 
+                 ((suc n) + m) + m * n
+                 ≡⟨ sym (+-assoc (suc n) m (m * n)) ⟩ 
+                 (suc n) + (m + m * n)
+                 ≡⟨ cong (λ x → (suc n) + x) (*suc m n) ⟩ 
+                 (suc n) + (m * suc n)
+                 ≡⟨ refl ⟩ 
+                 (suc m) * (suc n)
                  ∎
 
+-- Puedo reemplazar sym (0* n) por refl
 *-comm : (m n : ℕ) → m * n ≡ n * m
-*-comm m n = {!   !}
+*-comm zero n = trans (sym (0* n)) (*0 n)
+*-comm (suc m) n = begin
+                   suc m * n
+                   ≡⟨ refl ⟩
+                   n + m * n
+                   ≡⟨ cong (_+_ n) (*-comm m n) ⟩
+                   n + n * m
+                   ≡⟨ *suc n m ⟩
+                   n * suc m
+                   ∎
+
+
 
 {- 
 Decidibilidad 
@@ -365,7 +384,7 @@ dadas dos pruebas de la misma igualdad, estas son iguales:
 -}
 
 ir : ∀{A B : Set}{a : A}{b : B} → (p q : a ≅ b) → p ≅ q
-ir refl refl = refl
+ir {a} {.a} refl refl = refl
 
 {-
 Al igual que para la proposicional, tenemos que la igualdad
@@ -401,11 +420,32 @@ Puede ser últil el siguiente operador posfijo
 _$- : {A : Set} {B : A → Set} → ((x : A) → B x) → ({x : A} → B x)
 f $- = f _
 
+_$+ : {A : Set} {B : A → Set} → ({x : A} → B x) → ((x : A) → B x)
+f $+ = λ x → f {x}
+
 implicit-extensionality : Extensionality → ExtensionalityImplicit
-implicit-extensionality ext f≅g = {!   !}
+implicit-extensionality ext {A} {B} {f} {g} f≅g = {!   !}
+
+-- H.≅-Reasoning.begin
+--                                                   f
+--                                                   H.≅-Reasoning.≅⟨ {!   !} ⟩
+--                                                   {!   !}
+--                                                   H.≅-Reasoning.≅⟨ {!   !} ⟩
+--                                                   {!   !}
+--                                                   H.≅-Reasoning.≅⟨ {!   !} ⟩
+--                                                   {!   !}
+--                                                   H.≅-Reasoning.≅⟨ {!   !} ⟩
+--                                                   {!   !}
+--                                                   H.≅-Reasoning.≅⟨ {!   !} ⟩
+--                                                   g
+--                                                   H.≅-Reasoning.∎
+
+
+
+
 
 iext : ExtensionalityImplicit
-iext = {!   !}
+iext f≅g =  {!   !}
 
 
 --------------------------------------------------
@@ -416,15 +456,21 @@ iext = {!   !}
 
 open import Data.Sum
 
+op : ℕ → ℕ
+op zero = suc (zero)
+op (suc n) = zero
+
 {- Definir funciones,
   mod₂ : resto de dividir por 2
   div₂ : división por 2
 -}
 mod₂ : ℕ → ℕ 
-mod₂ n = {!   !}
+mod₂ zero = zero
+mod₂ (suc n) = op (mod₂ n)
 
 div₂ : ℕ → ℕ
-div₂ n = {!   !}
+div₂ (suc (suc n)) = 1 + (div₂ n)
+div₂ _ = zero
 
 {- Probar las sigfuientes propiedades: -}
 
@@ -440,4 +486,9 @@ _≡₂_ : ℕ → ℕ → Set
 m ≡₂ n = mod₂ m ≡ mod₂ n
 
 _≡₂?_ : (m n : ℕ) → Dec (m ≡₂ n)
-m ≡₂? n = {!   !}
+zero ≡₂? zero = yes refl
+zero ≡₂? suc n with zero ≡₂? n
+... | yes p = no {!   !}
+... | no np = yes {!   !}
+suc m ≡₂? n = {!   !}
+ 
