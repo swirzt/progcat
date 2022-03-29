@@ -420,32 +420,11 @@ Puede ser últil el siguiente operador posfijo
 _$- : {A : Set} {B : A → Set} → ((x : A) → B x) → ({x : A} → B x)
 f $- = f _
 
-_$+ : {A : Set} {B : A → Set} → ({x : A} → B x) → ((x : A) → B x)
-f $+ = λ x → f {x}
-
 implicit-extensionality : Extensionality → ExtensionalityImplicit
-implicit-extensionality ext {A} {B} {f} {g} f≅g = {!   !}
-
--- H.≅-Reasoning.begin
---                                                   f
---                                                   H.≅-Reasoning.≅⟨ {!   !} ⟩
---                                                   {!   !}
---                                                   H.≅-Reasoning.≅⟨ {!   !} ⟩
---                                                   {!   !}
---                                                   H.≅-Reasoning.≅⟨ {!   !} ⟩
---                                                   {!   !}
---                                                   H.≅-Reasoning.≅⟨ {!   !} ⟩
---                                                   {!   !}
---                                                   H.≅-Reasoning.≅⟨ {!   !} ⟩
---                                                   g
---                                                   H.≅-Reasoning.∎
-
-
-
-
+implicit-extensionality ext f≅g = H.cong _$- (ext (λ x → refl) (λ x → f≅g))
 
 iext : ExtensionalityImplicit
-iext f≅g =  {!   !}
+iext f≅g = H.cong _$- (ext (λ x → refl) (λ x → f≅g))
 
 
 --------------------------------------------------
@@ -465,8 +444,11 @@ op (suc n) = zero
   div₂ : división por 2
 -}
 mod₂ : ℕ → ℕ 
+-- mod₂ zero = zero
+-- mod₂ (suc n) = op (mod₂ n)
 mod₂ zero = zero
-mod₂ (suc n) = op (mod₂ n)
+mod₂ (suc zero) = (suc zero)
+mod₂ (suc (suc n)) = mod₂ n
 
 div₂ : ℕ → ℕ
 div₂ (suc (suc n)) = 1 + (div₂ n)
