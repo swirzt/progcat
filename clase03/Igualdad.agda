@@ -435,42 +435,83 @@ iext f≅g = H.cong _$- (ext (λ x → refl) (λ x → f≅g))
 
 open import Data.Sum
 
-op : ℕ → ℕ
-op zero = suc (zero)
-op (suc n) = zero
-
 {- Definir funciones,
   mod₂ : resto de dividir por 2
   div₂ : división por 2
 -}
 mod₂ : ℕ → ℕ 
--- mod₂ zero = zero
--- mod₂ (suc n) = op (mod₂ n)
 mod₂ zero = zero
 mod₂ (suc zero) = (suc zero)
 mod₂ (suc (suc n)) = mod₂ n
 
 div₂ : ℕ → ℕ
-div₂ (suc (suc n)) = 1 + (div₂ n)
-div₂ _ = zero
+div₂ zero = zero
+div₂ (suc zero) = zero
+div₂ (suc (suc n)) = (suc (div₂ n))
 
 {- Probar las sigfuientes propiedades: -}
 
 mod₂Lem : (n : ℕ) → (mod₂ n ≡ 0) ⊎ (mod₂ n ≡ 1)
-mod₂Lem n = {!   !}
+mod₂Lem zero = inj₁ refl
+mod₂Lem (suc zero) = inj₂ refl
+mod₂Lem (suc (suc n)) = mod₂Lem n
+
+sucsuc :  ∀{n} → (suc (suc n) ≡ 2 + n)
+sucsuc = refl
+
+2* :  ∀{n} → n + n ≡ 2 * n
+2* {zero} = refl
+2* {suc n} = begin
+             suc n + suc n
+             ≡⟨ refl ⟩
+             suc (n + suc n)
+             ≡⟨ cong (λ x → suc x) (+suc n n) ⟩
+             suc (suc (n + n))
+             ≡⟨ cong (λ x → suc (suc x)) 2* ⟩
+             suc (suc (2 * n))
+             ≡⟨ sucsuc ⟩
+             2 + (2 * n)
+             ≡⟨ *suc 2 n ⟩
+             2 * suc n
+             ∎
 
 div₂Lem : ∀ {n} → 2 * (div₂ n) + mod₂ n ≡ n
-div₂Lem {n} = {!   !}
+div₂Lem {zero} = refl
+div₂Lem {suc zero} = refl
+div₂Lem {suc (suc n)} = begin
+                        2 * (div₂ (suc (suc n))) + mod₂ (suc (suc n))
+                        ≡⟨ refl ⟩ -- Aca use las definiciones de div y mod
+                        2 * (suc (div₂ n)) + mod₂ n
+                        ≡⟨ refl ⟩ -- aplique la multiplicacion
+                        suc (div₂ n + suc (div₂ n + zero) + mod₂ n)
+                        ≡⟨ cong (λ x → suc (x + (mod₂ n))) (+suc (div₂ n) ((div₂ n) + zero)) ⟩
+                        suc (suc (div₂ n + (div₂ n + zero) + mod₂ n))
+                        ≡⟨ refl ⟩
+                        suc (suc ((2 * (div₂ n)) + (mod₂ n)))
+                        ≡⟨ cong (λ x → suc (suc x)) div₂Lem ⟩
+                        suc (suc n)
+                        ∎
 
 {- Mostrar que la igualdad modulo 2 es decidible -}
 
 _≡₂_ : ℕ → ℕ → Set
 m ≡₂ n = mod₂ m ≡ mod₂ n
 
+opMod : ∀ {n} → neg (mod₂ (suc n) ≡ mod₂ n)
+opMod {zero} = λ x → lem zero (sym x)
+opMod {suc n} = λ x → {!   !}
+
+aux : {m n : ℕ} → (mod₂ m ≡ 0) ⊎ (mod₂ m ≡ 1) → (mod₂ n ≡ 0) ⊎ (mod₂ n ≡ 1) → Dec (m ≡₂ n)
+aux (inj₁ x) (inj₁ y) = yes (trans x (sym y))
+aux (inj₁ x) (inj₂ y) = no λ z → lem zero (trans (sym x) (trans z y))
+aux (inj₂ x) (inj₁ y) = no λ z → lem zero (trans (sym y) (trans (sym z) x))
+aux (inj₂ x) (inj₂ y) = yes (trans x (sym y))
+
 _≡₂?_ : (m n : ℕ) → Dec (m ≡₂ n)
-zero ≡₂? zero = yes refl
-zero ≡₂? suc n with zero ≡₂? n
-... | yes p = no {!   !}
-... | no np = yes {!   !}
-suc m ≡₂? n = {!   !}
- 
+m ≡₂? n = aux (mod₂Lem m) (mod₂Lem n)
+-- zero ≡₂? n with mod₂Lem n
+-- ... | inj₁ p = yes (sym p)
+-- ... | inj₂ p = no λ x → lem zero (trans x p)
+-- suc m ≡₂? n with aux (mod₂Lem m) (mod₂Lem n)
+-- ... | yes p = {!   !}
+-- ... | no np = {!   !}
