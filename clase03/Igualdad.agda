@@ -467,7 +467,7 @@ sucsuc = refl
              suc (n + suc n)
              ≡⟨ cong (λ x → suc x) (+suc n n) ⟩
              suc (suc (n + n))
-             ≡⟨ cong (λ x → suc (suc x)) 2* ⟩
+             ≡⟨ cong (λ x → suc (suc x)) (2* {n}) ⟩
              suc (suc (2 * n))
              ≡⟨ sucsuc ⟩
              2 + (2 * n)
@@ -497,10 +497,6 @@ div₂Lem {suc (suc n)} = begin
 _≡₂_ : ℕ → ℕ → Set
 m ≡₂ n = mod₂ m ≡ mod₂ n
 
-opMod : ∀ {n} → neg (mod₂ (suc n) ≡ mod₂ n)
-opMod {zero} = λ x → lem zero (sym x)
-opMod {suc n} = λ x → {!   !}
-
 aux : {m n : ℕ} → (mod₂ m ≡ 0) ⊎ (mod₂ m ≡ 1) → (mod₂ n ≡ 0) ⊎ (mod₂ n ≡ 1) → Dec (m ≡₂ n)
 aux (inj₁ x) (inj₁ y) = yes (trans x (sym y))
 aux (inj₁ x) (inj₂ y) = no λ z → lem zero (trans (sym x) (trans z y))
@@ -508,10 +504,4 @@ aux (inj₂ x) (inj₁ y) = no λ z → lem zero (trans (sym y) (trans (sym z) x
 aux (inj₂ x) (inj₂ y) = yes (trans x (sym y))
 
 _≡₂?_ : (m n : ℕ) → Dec (m ≡₂ n)
-m ≡₂? n = aux (mod₂Lem m) (mod₂Lem n)
--- zero ≡₂? n with mod₂Lem n
--- ... | inj₁ p = yes (sym p)
--- ... | inj₂ p = no λ x → lem zero (trans x p)
--- suc m ≡₂? n with aux (mod₂Lem m) (mod₂Lem n)
--- ... | yes p = {!   !}
--- ... | no np = {!   !}
+m ≡₂? n = aux {m} {n} (mod₂Lem m) (mod₂Lem n)
