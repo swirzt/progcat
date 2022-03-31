@@ -456,25 +456,6 @@ mod₂Lem zero = inj₁ refl
 mod₂Lem (suc zero) = inj₂ refl
 mod₂Lem (suc (suc n)) = mod₂Lem n
 
-sucsuc :  ∀{n} → (suc (suc n) ≡ 2 + n)
-sucsuc = refl
-
-2* :  ∀{n} → n + n ≡ 2 * n
-2* {zero} = refl
-2* {suc n} = begin
-             suc n + suc n
-             ≡⟨ refl ⟩
-             suc (n + suc n)
-             ≡⟨ cong (λ x → suc x) (+suc n n) ⟩
-             suc (suc (n + n))
-             ≡⟨ cong (λ x → suc (suc x)) (2* {n}) ⟩
-             suc (suc (2 * n))
-             ≡⟨ sucsuc ⟩
-             2 + (2 * n)
-             ≡⟨ *suc 2 n ⟩
-             2 * suc n
-             ∎
-
 div₂Lem : ∀ {n} → 2 * (div₂ n) + mod₂ n ≡ n
 div₂Lem {zero} = refl
 div₂Lem {suc zero} = refl
@@ -486,7 +467,7 @@ div₂Lem {suc (suc n)} = begin
                         suc (div₂ n + suc (div₂ n + zero) + mod₂ n)
                         ≡⟨ cong (λ x → suc (x + (mod₂ n))) (+suc (div₂ n) ((div₂ n) + zero)) ⟩
                         suc (suc (div₂ n + (div₂ n + zero) + mod₂ n))
-                        ≡⟨ refl ⟩
+                        ≡⟨ refl ⟩ -- reversa de la multiplicacion
                         suc (suc ((2 * (div₂ n)) + (mod₂ n)))
                         ≡⟨ cong (λ x → suc (suc x)) div₂Lem ⟩
                         suc (suc n)
