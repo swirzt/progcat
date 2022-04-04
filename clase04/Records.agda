@@ -36,7 +36,7 @@ record Monoid : Set₁  where
 -}
 
 open import Data.Nat
-open import Data.Nat.Properties using (+-identityʳ ; +-assoc)
+open import Data.Nat.Properties using (+-identityʳ ; +-assoc ; *-distribʳ-+)
 
 -- Monoide de Naturales y suma
 
@@ -61,6 +61,35 @@ open NatMonoid
 open ≡-Reasoning
 
 
+infixr 5 _∷_
+infixr 4 _++_
+
+{- \:: -}
+
+data List (A : Set) : Set where
+      [] : List A
+      _∷_ : (x : A) → (xs : List A) → List A
+
+_++_ : {A : Set} → List A → List A → List A
+[] ++ ys = ys
+x ∷ xs ++ ys = x ∷ (xs ++ ys)
+
+ListMonoid : Set → Monoid
+ListMonoid X = record
+    { Carrier = List X 
+    ; _∙_ = _++_ 
+    ; ε = [] 
+    ; lid = refl 
+    ; rid = demrid 
+    ; assoc = λ {x} {y} {z} → demassoc {X} {x} {y} {z} }
+    where demrid : {X : Set} → {l : List X} → (l ++ []) ≡ l
+          demrid {l = []} = refl
+          demrid {l = x ∷ xs} = cong (λ y → x ∷ y) demrid
+          demassoc : {X : Set} → {x y z : List X} → ((x ++ y) ++ z) ≡ (x ++ y ++ z)
+          demassoc {x = []} {y} {z} = refl
+          demassoc {x = x ∷ xs} {y} {z} = cong (λ w → x ∷ w) (demassoc {x = xs})
+
+
 --------------------------------------------------
 
 {- Ejercicio: Probar que para todo monoide M, N, el producto
@@ -69,8 +98,19 @@ open ≡-Reasoning
 
  Ayuda : puede ser útil cong₂
 -}
-
 open import Data.Product renaming (proj₁ to fst; proj₂ to snd)
+
+f = cong₂
+ProductMonoid : Monoid → Monoid → Monoid
+ProductMonoid M N = record
+  { Carrier = Carrier₁ × Carrier₂ ;
+    _∙_ = λ x y → ((fst x) ∙₁ (fst y)) , ((snd x) ∙₂ (snd y)) ;
+    ε = ε₁ , ε₂ ;
+    lid = cong₂ (_,_) lid₁ lid₂ ;
+    rid = cong₂ _,_ rid₁ rid₂ ;
+    assoc = cong₂ _,_ assoc₁ assoc₂ }
+    where open Monoid M renaming (ε to ε₁ ;  _∙_ to _∙₁_; lid to lid₁; rid to rid₁; assoc to assoc₁; Carrier to Carrier₁)
+          open Monoid N renaming (ε to ε₂ ;  _∙_ to _∙₂_; lid to lid₂; rid to rid₂; assoc to assoc₂; Carrier to Carrier₂)
 
 --------------------------------------------------
 open import Function
@@ -129,13 +169,34 @@ rep-is-monoid-homo {M} = record {
 --------------------------------------------------
 {- Ejercicio: Probar que length es un homorfismo de monoides -}
 
-{-
+
 length : {A : Set} → List A → ℕ
 length [] = 0
 length (x ∷ xs) = 1 + length xs
--}            
+
+length-is-monoid-homo : {X : Set} → Is-Monoid-Homo (ListMonoid X) NatMonoid length
+length-is-monoid-homo {X} = record {
+                              preserves-unit = refl ;
+                              preserves-mult = λ {x} {y} → dem {x} {y} }
+                               where dem : {x y : List X} → length (x ++ y) ≡ length x + length y
+                                     dem {[]} = refl
+                                     dem {x ∷ xs} {y} = cong suc (dem {x = xs})
+                          
 --------------------------------------------------
 {- Ejercicio: Probar que multiplicar por una constante es un es un homorfismo de NatMonoid -}
+
+multcont-is-monoid-homo : {n : ℕ} → Is-Monoid-Homo NatMonoid NatMonoid (λ x → x * n)
+multcont-is-monoid-homo {n} = record {
+                                preserves-unit = refl ;
+                                preserves-mult = λ {x} {y} → *-distribʳ-+ x {! y  !} {! n  !} }
+                                  where dem : {x y : ℕ} → (x + y) * n ≡ x * n + y * n
+                                        dem {zero} = refl
+                                        dem {suc x} = begin 
+                                                      {! c  !}
+                                                      ≡⟨ {!   !} ⟩
+                                                      {!   !}
+                                                      ∎
+
 
 
 --------------------------------------------------
@@ -190,3 +251,4 @@ Ayuda : puede ser útil usar cong-app
 
 Biyectiva : {X Y : Set}(f : X → Y) → Set
 Biyectiva {X} {Y} f = (y : Y) → Σ X (λ x → (f x ≡ y) × (∀ x' → f x' ≡ y → x ≡ x')) 
+ 
