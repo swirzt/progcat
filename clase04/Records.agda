@@ -188,15 +188,7 @@ length-is-monoid-homo {X} = record {
 multcont-is-monoid-homo : {n : ℕ} → Is-Monoid-Homo NatMonoid NatMonoid (λ x → x * n)
 multcont-is-monoid-homo {n} = record {
                                 preserves-unit = refl ;
-                                preserves-mult = λ {x} {y} → *-distribʳ-+ x {! y  !} {! n  !} }
-                                  where dem : {x y : ℕ} → (x + y) * n ≡ x * n + y * n
-                                        dem {zero} = refl
-                                        dem {suc x} = begin 
-                                                      {! c  !}
-                                                      ≡⟨ {!   !} ⟩
-                                                      {!   !}
-                                                      ∎
-
+                                preserves-mult = λ {x} {y} → *-distribʳ-+ n x y }
 
 
 --------------------------------------------------
@@ -206,10 +198,25 @@ module Foldr (M : Monoid) where
 
  {- Ejercicio : Definir foldr y probar que (foldr _∙_ ε) es un homorfismo de monoides -}
 
-{-
+
  foldr : {A B : Set} → (A → B → B) → B → List A → B
- foldr _⊗_ e xs = {!   !}
--}
+ foldr _⊗_ e [] = e
+ foldr _⊗_ e (x ∷ xs) = x ⊗ (foldr _⊗_ e xs)
+
+
+ foldr-is-monoid-homo : Is-Monoid-Homo (ListMonoid Carrier) M (foldr _∙_ ε)
+ foldr-is-monoid-homo = record {
+                          preserves-unit = refl ;
+                          preserves-mult = λ {x} {y} → dem {x} {y} }
+                            where dem : {x y : List Carrier} → foldr _∙_ ε (x ++ y) ≡ foldr _∙_ ε x ∙ foldr _∙_ ε y
+                                  dem {[]} = sym lid
+                                  dem {x ∷ xs} {y} = begin
+                                                     x ∙ foldr _∙_ ε (xs ++ y)
+                                                     ≡⟨ cong (λ z → x ∙ z) (dem {x = xs}) ⟩
+                                                     x ∙ foldr _∙_ ε xs ∙ foldr _∙_ ε y
+                                                     ≡⟨ sym  assoc ⟩
+                                                     (x ∙ foldr _∙_ ε xs) ∙ foldr _∙_ ε y
+                                                     ∎
 --------------------------------------------------
 
 {- Isomorfismos entre conjuntos -}
@@ -227,19 +234,92 @@ open Iso
 {- Ejercicio : introducir un tipo de datos (record) ⊤ con un único habitante y
 probar que  ℕ es isomorfo a List ⊤ -}
 
+data ⊤ : Set where
+  t : ⊤
+
+isoNatT : Iso ℕ (List ⊤)
+isoNatT = record {
+            fun = to ;
+            inv = from ;
+            law1 = demlaw1 ;
+            law2 = demlaw2 }
+              where
+                    to : ℕ → List ⊤
+                    to 0 = []
+                    to (suc n) = t ∷ to n
+                    from : List ⊤ → ℕ
+                    from [] = 0
+                    from (t ∷ ts) = suc (from ts)
+                    demlaw1 : (l : List ⊤) → to (from l) ≡ l
+                    demlaw1 [] = refl
+                    demlaw1 (t ∷ xs) = cong (λ x → t ∷ x) (demlaw1 xs)
+                    demlaw2 : (n : ℕ) → from (to n) ≡ n
+                    demlaw2 zero = refl
+                    demlaw2 (suc n) = cong suc (demlaw2 n)
+
 
 {- Ejercicio: introducir un constructor de tipos Maybe (o usar Data.Maybe) y probar que
 Maybe ℕ es isomorfo a ℕ -}
+
+data Maybe (A : Set) : Set where
+  Nothing : Maybe A
+  Just : A → Maybe A
+
+isoMaybeNat : Iso (Maybe ℕ) ℕ
+isoMaybeNat = record {
+              fun = to ;
+              inv = from ;
+              law1 = demlaw1 ;
+              law2 = demlaw2 }
+                where 
+                      to : Maybe ℕ → ℕ
+                      to Nothing = zero
+                      to (Just x) = suc x
+                      from : ℕ → Maybe ℕ
+                      from zero = Nothing
+                      from (suc n) = Just n
+                      demlaw1 : (x : ℕ) → to (from x) ≡ x
+                      demlaw1 zero = refl
+                      demlaw1 (suc n) = refl
+                      demlaw2 : (a : Maybe ℕ) → from (to a) ≡ a
+                      demlaw2 Nothing = refl
+                      demlaw2 (Just x) = refl
 
 {- Ejercicio: introducir un constructor de tipos _×_ para productos
 cartesianos (o usar el de Data.Product) y probar que (A → B × C) es
 isomorfo a (A → B) × (A → C) para todos A, B, y C, habitantes de Set -}
 
+isoCross : {A B C : Set} → Iso (A → B × C) ((A → B) × (A → C))
+isoCross = record {
+            fun = λ f → (λ a → fst (f a)) , λ a → snd (f a) ;
+            inv = λ {(f , g) a → (f a) , (g a)} ;
+            law1 = λ _ → refl ;
+            law2 = λ _ → refl }
 
 {- Ejercicio: construir isomorfismos entre Vec A n × Vec B n y
 Vec (A × B) n para todos A, B habitantes de Set y n natural -}
 
 open import Data.Vec
+
+isoVec : {A B : Set} → {n : ℕ} → Iso (Vec A n × Vec B n) (Vec (A × B) n)
+isoVec = record {
+          fun = to ;
+          inv = from ;
+          law1 = demlaw1 ;
+          law2 = demlaw2 }
+            where
+                  to : {A B : Set} → {n : ℕ} → Vec A n × Vec B n → Vec (A × B) n
+                  to ([] , []) = []
+                  to (a ∷ as , b ∷ bs) = (a , b) ∷ (to (as , bs))
+                  from : {A B : Set} → {n : ℕ} → Vec (A × B) n → Vec A n × Vec B n
+                  from [] = [] , []
+                  from ((a , b) ∷ xs) = (a ∷ (fst (from xs))) , (b ∷ snd (from xs))
+                  demlaw1 : {A B : Set} → {n : ℕ} → (b : Vec (A × B) n) → to (from b) ≡ b
+                  demlaw1 [] = refl
+                  demlaw1 (x ∷ xs) = cong (λ y → x ∷ y) (demlaw1 xs)
+                  demlaw2 : {A B : Set} → {n : ℕ} → (a : Vec A n × Vec B n) → from (to a) ≡ a
+                  demlaw2 ([] , []) = refl
+                  demlaw2 (a ∷ as , b ∷ bs) = cong (λ x → (a ∷ (fst x)) , (b ∷ (snd x))) (demlaw2 (as , bs)) 
 
 
 --------------------------------------------------
@@ -251,4 +331,4 @@ Ayuda : puede ser útil usar cong-app
 
 Biyectiva : {X Y : Set}(f : X → Y) → Set
 Biyectiva {X} {Y} f = (y : Y) → Σ X (λ x → (f x ≡ y) × (∀ x' → f x' ≡ y → x ≡ x')) 
- 
+  
