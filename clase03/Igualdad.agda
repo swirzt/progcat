@@ -185,24 +185,26 @@ intentar que la prueba sea legible usando ≡-Reasoning
                    ∎
 
 +-assoc : (m n l : ℕ) → m + (n + l) ≡ (m + n) + l
-+-assoc m zero l = begin
-                   m + (zero + l)
-                   ≡⟨ cong (_+_ m) (0+ l) ⟩
-                   m + l
-                   ≡⟨ cong (λ x → x + l) (sym (+0 m)) ⟩ 
-                   (m + zero) + l
-                   ∎
-+-assoc m (suc n) l = begin
-                      m + (suc n + l)
-                      ≡⟨ +suc m (n + l) ⟩ 
-                      suc (m + (n + l))
-                      ≡⟨ cong suc (+-assoc m n l) ⟩ 
-                      suc (m + n + l)
-                      ≡⟨ refl ⟩ 
-                      (suc (m + n) + l)
-                      ≡⟨ cong (λ x → x + l) (sym (+suc m n)) ⟩ 
-                      (m + suc n) + l
-                      ∎
++-assoc zero n l = refl
++-assoc (suc m) n l = cong suc (+-assoc m n l) 
+-- +-assoc m zero l = begin
+--                    m + (zero + l)
+--                    ≡⟨ cong (_+_ m) (0+ l) ⟩
+--                    m + l
+--                    ≡⟨ cong (λ x → x + l) (sym (+0 m)) ⟩ 
+--                    (m + zero) + l
+--                    ∎
+-- +-assoc m (suc n) l = begin
+--                       m + (suc n + l)
+--                       ≡⟨ +suc m (n + l) ⟩ 
+--                       suc (m + (n + l))
+--                       ≡⟨ cong suc (+-assoc m n l) ⟩ 
+--                       suc (m + n + l)
+--                       ≡⟨ refl ⟩ 
+--                       (suc (m + n) + l)
+--                       ≡⟨ cong (λ x → x + l) (sym (+suc m n)) ⟩ 
+--                       (m + suc n) + l
+--                       ∎
 
 *0 : ∀ m → 0 ≡ m * 0
 *0 zero = refl
@@ -485,4 +487,5 @@ aux (inj₂ x) (inj₁ y) = no λ z → lem zero (trans (sym y) (trans (sym z) x
 aux (inj₂ x) (inj₂ y) = yes (trans x (sym y))
 
 _≡₂?_ : (m n : ℕ) → Dec (m ≡₂ n)
-m ≡₂? n = aux {m} {n} (mod₂Lem m) (mod₂Lem n)
+m ≡₂? n = mod₂ m ≡? mod₂ n 
+-- m ≡₂? n = aux {m} {n} (mod₂Lem m) (mod₂Lem n)
