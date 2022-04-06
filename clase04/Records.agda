@@ -335,8 +335,8 @@ set-iso-biy : {X Y : Set} → (iso : Iso X Y) → Biyectiva {X} {Y} (fun iso)
 set-iso-biy iso = λ y → inv iso y , (law1 iso y) , λ x' eq → trans (sym (cong (λ x → inv iso x) eq)) (law2 iso x')
 
 set-biy-iso : {X Y : Set} → (f : X → Y) → (g : Biyectiva {X} {Y} f) → Iso X Y
-set-biy-iso {X} f g = record {
-                      fun = f ;
-                      inv = λ z → fst (g z) ;
-                      law1 = λ b → fst (snd (g b)) ;
-                      law2 = λ a → snd (snd (g (f a))) a refl }
+set-biy-iso f g = record {
+                    fun = f ;
+                    inv = λ z → fst (g z) ;
+                    law1 = λ b → fst (snd (g b)) ;
+                    law2 = λ a → snd (snd (g (f a))) a refl }
