@@ -231,7 +231,16 @@ module CatMon where
  open import Records-completo hiding (Iso ; ⊤)
 
  CatMon : Monoid → Cat
- CatMon M = {!!} 
+ CatMon M = record
+   { Obj = Lift (lsuc lzero) ⊤
+   ; Hom = λ _ _ → Carrier
+   ; iden = ε
+   ; _∙_ = _∙_
+   ; idl = lid
+   ; idr = rid
+   ; ass = assoc
+   }
+   where open Monoid M
 
 
 --------------------------------------------------
@@ -247,8 +256,16 @@ module MonCat where
 
 
  MonCat : Cat
- MonCat = {!!}
- 
+ MonCat = record
+   { Obj = Monoid
+   ; Hom = λ M N → Carrier M → Carrier N
+   ; iden = id
+   ; _∙_ = λ g f x → g (f x)
+   ; idl = refl
+   ; idr = refl
+   ; ass = refl
+   }
+   where open Monoid
 --------------------------------------------------
 {- Ejercicio: Dada un categoría C, definir la siguiente categoría:
   - Los objetos son morfismos de C
@@ -262,8 +279,49 @@ module ArrowCat (C : Cat) where
  open Cat C 
 
 
+ record Arrow₀ : Set₁ where
+   constructor _,_,_
+   field
+     from : Obj
+     to : Obj
+     homFT : Hom from to
+ open Arrow₀
+
+ record Arrow₁ (f g : Arrow₀) : Set where
+   constructor _,_
+   field
+     hom : Hom (from f) (from g) × Hom (to f) (to g)
+     prop : (homFT g) ∙ (fst hom) ≡ (snd hom) ∙ (homFT f)
+ open Arrow₁
+
+ ArrowOp : {X Y Z : Arrow₀} → Arrow₁ Y Z → Arrow₁ X Y → Arrow₁ X Z
+ ArrowOp {X} {Y} {Z} (hom , prop) (hom₁ , prop₁) = (((fst hom) ∙ (fst hom₁)) , ((snd hom) ∙ (snd hom₁))) , (proof 
+                                                                                                homFT Z ∙ (fst hom ∙ fst hom₁)
+                                                                                                ≡⟨ sym ass ⟩
+                                                                                                (homFT Z ∙ fst hom) ∙ fst hom₁
+                                                                                                ≡⟨ cong (λ x → x ∙ fst hom₁) prop ⟩
+                                                                                                (snd hom ∙ homFT Y) ∙ fst hom₁
+                                                                                                ≡⟨ ass ⟩
+                                                                                                snd hom ∙ (homFT Y ∙ fst hom₁)
+                                                                                                ≡⟨ cong (λ x → snd hom ∙ x) prop₁ ⟩
+                                                                                                snd hom ∙ (snd hom₁ ∙ homFT X)
+                                                                                                ≡⟨ sym ass ⟩
+                                                                                                (snd hom ∙ snd hom₁) ∙ homFT X
+                                                                                                ∎)
+
+ Arrow₁-eq : {X Y : Arrow₀} {h h' : Arrow₁ X Y} → (hom h) ≡ (hom h') → h ≡ h'
+ Arrow₁-eq {X} {Y} {f , prop₁} {.f , prop₂} refl = cong (λ x → (f , x)) (ir prop₁ prop₂)
+
  ArrowCat : Cat
- ArrowCat = {!!}
+ ArrowCat = record
+   { Obj = Arrow₀
+   ; Hom = Arrow₁
+   ; iden = (iden , iden) , trans idr (sym idl)
+   ; _∙_ = ArrowOp
+   ; idl = Arrow₁-eq (cong₂ _,_ idl idl)
+   ; idr = Arrow₁-eq (cong₂ _,_ idr idr)
+   ; ass = Arrow₁-eq (cong₂ _,_ ass ass)
+   }
  
 --------------------------------------------------
 {- Generalizamos la noción de isomorfismo de la clase pasada a cualquier categoría -}
