@@ -343,14 +343,37 @@ record Iso {C : Cat}(A B : Obj C)(fun : Hom C A B) : Set where
 
 Ayuda : puede ser útil usar cong-app
 -}
+open import Records-completo hiding (Iso ; ext) 
 
+isoc-biyeccion : {A B : Obj Sets} → (f : Hom Sets A B) → Iso {Sets} A B f → Biyectiva f 
+isoc-biyeccion f (iso inv law1 law2) = λ y → (inv y) , ((cong-app law1 y) , (λ x' eq → proof
+                                                                                       inv y
+                                                                                       ≡⟨ sym (cong inv eq) ⟩
+                                                                                       inv (f x')
+                                                                                       ≡⟨ cong-app law2 x' ⟩
+                                                                                       x'
+                                                                                       ∎))
 
+byeccion-isoc : {A B : Obj Sets} → (f : Hom Sets A B) → Biyectiva f → Iso {Sets} A B f
+byeccion-isoc f biy = iso (λ x → fst (biy x))
+                          (ext (λ b → let (x , p , _) = biy b in
+                                      proof
+                                      f x
+                                      ≡⟨ p ⟩
+                                      b
+                                      ∎))
+                          (ext (λ a → let (x , _ , u) = biy (f a) in
+                                      proof
+                                      x
+                                      ≡⟨ u a refl ⟩
+                                      a
+                                      ∎))
 --------------------------------------------------
 {- Ejercicio:
  Probar que un isormofismo en (C : Cat) es un isomorfismo en (C Op).
-
-
 -}
+isoOp : {C : Cat}{A B : Obj C}{f : Hom C A B} → Iso {C} A B f → Iso {C Op} B A f
+isoOp (iso inv law1 law2) = iso inv law2 law1
 
 --------------------------------------------------
 {- Ejercicio EXTRA:
@@ -360,6 +383,76 @@ Ayuda : puede ser útil usar cong-app
   - los morfismos son funciones entre los conjuntos que preservan el punto
      (A,a) → (B, b) es una función f : A → B, tal que f(a) = b 
 -}
+
+record Point : Set₁ where
+  constructor point
+  field S : Set
+        x : S
+open Point
+
+record PointHom (A B : Point) : Set where
+  constructor pointHom
+  field fun : S A → S B
+        prop : fun (x A) ≡ x B
+open PointHom
+
+point-prod : {X Y Z : Point} → PointHom Y Z → PointHom X Y → PointHom X Z
+point-prod {X} {Y} {Z} (pointHom f2 prop2) (pointHom f1 prop1) = pointHom (λ x → f2 (f1 x))
+                                                                          (proof
+                                                                           f2 (f1 (x X))
+                                                                           ≡⟨ cong (λ v → f2 v) prop1 ⟩
+                                                                           f2 (x Y)
+                                                                           ≡⟨ prop2 ⟩
+                                                                           x Z
+                                                                           ∎)
+
+point-eq : {X Y : Point} {f g : PointHom X Y} → fun f ≡ fun g → f ≡ g
+point-eq {X} {Y} {pointHom fun₁ prop₁} {pointHom .fun₁ prop₂} refl = cong (λ x → pointHom fun₁ x) (ir prop₁ prop₂)
+
+demidl : {X Y : Point} {f : PointHom X Y} → point-prod (pointHom id refl) f ≡ f
+demidl {X} {Y} {pointHom fun prop} = proof
+                                      pointHom fun (trans (cong (λ z → z) prop) refl)
+                                      ≡⟨ cong (λ x → pointHom fun x) (trans-reflʳ (cong id prop)) ⟩
+                                      pointHom fun (cong (λ z → z) prop)
+                                      ≡⟨ cong (λ x → pointHom fun x) (cong-id prop) ⟩
+                                      pointHom fun prop
+                                      ∎
+
+demidr : {X Y : Point} {f : PointHom X Y} → point-prod f (pointHom id refl) ≡ f
+demidr {X} {Y} {pointHom fun prop} = proof
+                                      pointHom fun (trans prop refl)
+                                      ≡⟨ cong (λ x → pointHom fun x) (trans-reflʳ prop) ⟩
+                                      pointHom fun prop
+                                      ∎
+
+demass : {X Y Z W : Point} {f : PointHom Y Z} {g : PointHom X Y} {h : PointHom W X} → point-prod (point-prod f g) h ≡ point-prod f (point-prod g h)
+demass {f = pointHom fun3 prop3} {pointHom fun2 prop2} {pointHom fun1 prop1} = proof
+                                                                                pointHom (λ z → fun3 (fun2 (fun1 z)))
+                                                                                    (trans (cong (λ z → fun3 (fun2 z)) prop1)
+                                                                                     (trans (trans (cong fun3 prop2) (trans prop3 refl)) refl))
+                                                                                ≡⟨ cong (λ x → pointHom (λ z → fun3 (fun2 (fun1 z))) x) (trans-assoc {!   !}) ⟩
+                                                                                {!   !}
+                                                                                ≡⟨ {!   !} ⟩
+                                                                                {!   !}
+                                                                                ≡⟨ {!   !} ⟩
+                                                                                {!   !}
+                                                                                ≡⟨ {!   !} ⟩
+                                                                                pointHom ((λ z → fun3 (fun2 (fun1 z))))
+                                                                                    (trans (cong fun3 (trans (cong fun2 prop1) (trans prop2 refl)))
+                                                                                     (trans prop3 refl))
+                                                                                ∎
+
+PointedCat : (S : Set) → (x : S) → Cat
+PointedCat s x = record
+                    { Obj = {! point s x  !}
+                    ; Hom = PointHom
+                    ; iden = pointHom id refl
+                    ; _∙_ = point-prod
+                    ; idl = demidl
+                    ; idr = demidr
+                    ; ass = demass
+                    }
+                    
 
 --------------------------------------------------
 
