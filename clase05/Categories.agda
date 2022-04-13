@@ -425,32 +425,19 @@ demidr {X} {Y} {pointHom fun prop} = proof
                                       pointHom fun prop
                                       ∎
 
+-- La hice con pattern matching porque si no era muy larga
 demass : {X Y Z W : Point} {f : PointHom Y Z} {g : PointHom X Y} {h : PointHom W X} → point-prod (point-prod f g) h ≡ point-prod f (point-prod g h)
-demass {f = pointHom fun3 prop3} {pointHom fun2 prop2} {pointHom fun1 prop1} = proof
-                                                                                pointHom (λ z → fun3 (fun2 (fun1 z)))
-                                                                                    (trans (cong (λ z → fun3 (fun2 z)) prop1)
-                                                                                     (trans (trans (cong fun3 prop2) (trans prop3 refl)) refl))
-                                                                                ≡⟨ cong (λ x → pointHom (λ z → fun3 (fun2 (fun1 z))) x) (trans-assoc {!   !}) ⟩
-                                                                                {!   !}
-                                                                                ≡⟨ {!   !} ⟩
-                                                                                {!   !}
-                                                                                ≡⟨ {!   !} ⟩
-                                                                                {!   !}
-                                                                                ≡⟨ {!   !} ⟩
-                                                                                pointHom ((λ z → fun3 (fun2 (fun1 z))))
-                                                                                    (trans (cong fun3 (trans (cong fun2 prop1) (trans prop2 refl)))
-                                                                                     (trans prop3 refl))
-                                                                                ∎
+demass {point _ .(fun1 x)} {point _ .(fun2 (fun1 x))} {point _ .(fun3 (fun2 (fun1 x)))} {point _ x} {pointHom fun3 refl} {pointHom fun2 refl} {pointHom fun1 refl} = refl
 
 PointedCat : (S : Set) → (x : S) → Cat
 PointedCat s x = record
-                    { Obj = {! point s x  !}
+                    { Obj = Point
                     ; Hom = PointHom
                     ; iden = pointHom id refl
                     ; _∙_ = point-prod
                     ; idl = demidl
                     ; idr = demidr
-                    ; ass = demass
+                    ; ass = λ {X} {Y} {Z} {W} {f} {g} {h} → demass {X} {Y} {Z} {W} {f} {g} {h}
                     }
                     
 
