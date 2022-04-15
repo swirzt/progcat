@@ -233,8 +233,8 @@ open Iso
 {- Ejercicio : introducir un tipo de datos (record) ⊤ con un único habitante y
 probar que  ℕ es isomorfo a List ⊤ -}
 
-data ⊤ : Set where
-  t : ⊤
+record ⊤ : Set where
+  constructor t
 
 isoNatT : Iso ℕ (List ⊤)
 isoNatT = record {

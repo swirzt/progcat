@@ -429,16 +429,16 @@ demidr {X} {Y} {pointHom fun prop} = proof
 demass : {X Y Z W : Point} {f : PointHom Y Z} {g : PointHom X Y} {h : PointHom W X} → point-prod (point-prod f g) h ≡ point-prod f (point-prod g h)
 demass {point _ .(fun1 x)} {point _ .(fun2 (fun1 x))} {point _ .(fun3 (fun2 (fun1 x)))} {point _ x} {pointHom fun3 refl} {pointHom fun2 refl} {pointHom fun1 refl} = refl
 
-PointedCat : (S : Set) → (x : S) → Cat
-PointedCat s x = record
-                    { Obj = Point
-                    ; Hom = PointHom
-                    ; iden = pointHom id refl
-                    ; _∙_ = point-prod
-                    ; idl = demidl
-                    ; idr = demidr
-                    ; ass = λ {X} {Y} {Z} {W} {f} {g} {h} → demass {X} {Y} {Z} {W} {f} {g} {h}
-                    }
+PointedCat : Cat
+PointedCat = record
+              { Obj = Point
+              ; Hom = PointHom
+              ; iden = pointHom id refl
+              ; _∙_ = point-prod
+              ; idl = demidl
+              ; idr = demidr
+              ; ass = λ {X} {Y} {Z} {W} {f} {g} {h} → demass {X} {Y} {Z} {W} {f} {g} {h}
+              }
                     
 
 --------------------------------------------------
