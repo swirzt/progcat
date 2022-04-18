@@ -343,7 +343,7 @@ record Iso {C : Cat}(A B : Obj C)(fun : Hom C A B) : Set where
 
 Ayuda : puede ser útil usar cong-app
 -}
-open import Records-completo hiding (Iso ; ext) 
+open import Records-completo renaming (Iso to IsoSet ; ext to ext2) 
 
 isoc-biyeccion : {A B : Obj Sets} → (f : Hom Sets A B) → Iso {Sets} A B f → Biyectiva f 
 isoc-biyeccion f (iso inv law1 law2) = λ y → (inv y) , ((cong-app law1 y) , (λ x' eq → proof
@@ -448,6 +448,45 @@ PointedCat = record
   - objetos son conjuntos finitos (y por lo tanto isomorfos a Fin n para algún n)
   - morfismos son isomorfismos.  
 -}
+
+data ℕ : Set where
+  zero : ℕ
+  suc  : ℕ → ℕ
+
+data Fin : ℕ -> Set where
+  zero : {n : ℕ} → Fin (suc n)
+  suc  : {n : ℕ} → Fin n -> Fin (suc n)
+
+record FiniteSet : Set₁ where
+  constructor finiteSet
+  field S : Set
+        n : ℕ
+        f : S → Fin n
+        prop : IsoSet S (Fin n) f
+open FiniteSet
+
+record FiniteSetHom (A B : FiniteSet) : Set where
+  constructor finiteSetHom
+  field fun : S A → S B
+        prop : IsoSet (S A) (S B) fun
+open FiniteSetHom
+open IsoSet
+
+finite-prod : {A B C : FiniteSet} → FiniteSetHom B C → FiniteSetHom A B → FiniteSetHom A C
+finite-prod {A} {B} {C} h2 h1 = finiteSetHom (λ x → fun h2 (fun h1 x)) (iso (λ x → inv (prop h1) (inv (prop h2) x)) (λ b → {!   !}) {!   !})
+                                    
+-- Se complicó mucho, algo hice mal
+
+FiniteCat : Cat
+FiniteCat = record
+  { Obj = FiniteSet
+  ; Hom = FiniteSetHom
+  ; iden = finiteSetHom id (iso id (λ b → refl) (λ a → refl))
+  ; _∙_ = finite-prod
+  ; idl = {!   !}
+  ; idr = {!   !}
+  ; ass = {!   !}
+  }
 
 --------------------------------------------------
 
