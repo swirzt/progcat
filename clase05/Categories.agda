@@ -462,19 +462,46 @@ record FiniteSet : Set₁ where
   field S : Set
         n : ℕ
         f : S → Fin n
-        prop : IsoSet S (Fin n) f
+        isoFin : IsoSet S (Fin n) f
 open FiniteSet
 
 record FiniteSetHom (A B : FiniteSet) : Set where
   constructor finiteSetHom
   field fun : S A → S B
-        prop : IsoSet (S A) (S B) fun
+        isoprop : IsoSet (S A) (S B) fun
 open FiniteSetHom
 open IsoSet
 
 finite-prod : {A B C : FiniteSet} → FiniteSetHom B C → FiniteSetHom A B → FiniteSetHom A C
-finite-prod {A} {B} {C} h2 h1 = finiteSetHom (λ x → fun h2 (fun h1 x)) (iso (λ x → inv (prop h1) (inv (prop h2) x)) (λ b → {!   !}) {!   !})
-                                    
+finite-prod {A} {B} {C} h2 h1 = finiteSetHom (λ x → fun h2 (fun h1 x)) (iso (λ x → inv (isoprop h1) (inv (isoprop h2) x)) funinv invfun)
+                                where 
+                                      funinv : (b : S C) → fun h2 (fun h1 (inv (isoprop h1) (inv (isoprop h2) b))) ≡ b
+                                      funinv b = proof 
+                                                 fun h2 (fun h1 (inv (isoprop h1) (inv (isoprop h2) b)))                 
+                                                 ≡⟨ cong (λ x → fun h2 x) (law1 (isoprop h1) (inv (isoprop h2) b)) ⟩
+                                                 fun h2 (inv (isoprop h2) b)
+                                                 ≡⟨ law1 (isoprop h2) b ⟩
+                                                 b
+                                                 ∎
+                                      invfun : (a : S A) → inv (isoprop h1) (inv (isoprop h2) (fun h2 (fun h1 a))) ≡ a
+                                      invfun a = proof 
+                                                 inv (isoprop h1) (inv (isoprop h2) (fun h2 (fun h1 a)))
+                                                 ≡⟨ cong (λ x → inv (isoprop h1) x) (law2 (isoprop h2) (fun h1 a)) ⟩
+                                                 inv (isoprop h1) (fun h1 a)
+                                                 ≡⟨ law2 (isoprop h1) a ⟩
+                                                 a
+                                                 ∎
+
+finite-eq : {A B : FiniteSet} {f g : FiniteSetHom A B} → fun f ≡ fun g → f ≡ g
+finite-eq {A} {B} {finiteSetHom .fun1 isoprop2} {finiteSetHom fun1 isoprop1} refl = cong (λ x → finiteSetHom fun1 x) (proof 
+                                                                                                                      isoprop2
+                                                                                                                      ≡⟨ {!   !} ⟩
+                                                                                                                      {!   !}
+                                                                                                                      ≡⟨ {!   !} ⟩
+                                                                                                                      {!   !}
+                                                                                                                      ≡⟨ {!   !} ⟩
+                                                                                                                      {!   !}
+                                                                                                                      ∎)
 -- Se complicó mucho, algo hice mal
 
 FiniteCat : Cat
