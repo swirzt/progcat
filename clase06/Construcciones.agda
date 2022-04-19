@@ -6,23 +6,8 @@ module clase06.Construcciones {a}{b}(C : Cat {a} {b}) where
 --Revisamos la definición de categorías
 open Cat C
 
-
-
-
-
-
 -- Revisamos Isomorfismos
 open import Categories.Iso C
-
-
-
-
-
-
-
-
-
-
 
 ----------------------
 -- Objeto Terminal
@@ -249,26 +234,48 @@ module Intercambio {cp : Coproducts}{p : Products} where
          → (f : Hom A C)(g : Hom B C)
          → (h : Hom A D)(k : Hom B D)
          → ⟨ [ f , g ] , [ h , k ] ⟩ ≅ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]
-  intercambio f g h k = proof
-                        ⟨ [ f , g ] , [ h , k ] ⟩
-                        ≅⟨ {!   !} ⟩
-                        {!   !}
-                        ≅⟨ {!   !} ⟩
-                        {!   !}
-                        ≅⟨ {!   !} ⟩
-                        {!   !}
-                        ≅⟨ {!   !} ⟩
-                        {!   !}
-                        ≅⟨ {!   !} ⟩
-                        {!   !}
-                        ≅⟨ {!   !} ⟩
-                        {!   !}
-                        ≅⟨ {!   !} ⟩
-                        [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]
-                        ∎
+  intercambio f g h k = law3 (lawp3 (proof 
+                                     π₁ ∙ ⟨ [ f , g ] , [ h , k ] ⟩ ∙ inl
+                                     ≅⟨ sym ass ⟩
+                                     (π₁ ∙ ⟨ [ f , g ] , [ h , k ] ⟩) ∙ inl
+                                     ≅⟨ cong (λ x → x ∙ inl) lawp1 ⟩
+                                     [ f , g ] ∙ inl
+                                     ≅⟨ law1 ⟩
+                                     f
+                                     ∎) 
+                                    (proof 
+                                     π₂ ∙ ⟨ [ f , g ] , [ h , k ] ⟩ ∙ inl
+                                     ≅⟨ sym ass ⟩
+                                     (π₂ ∙ ⟨ [ f , g ] , [ h , k ] ⟩) ∙ inl
+                                     ≅⟨ cong (λ x → x ∙ inl) lawp2 ⟩
+                                     [ h , k ] ∙ inl
+                                     ≅⟨ law1 ⟩
+                                     h
+                                     ∎))
+                             (lawp3 (proof 
+                                     π₁ ∙ ⟨ [ f , g ] , [ h , k ] ⟩ ∙ inr
+                                     ≅⟨ sym ass ⟩
+                                     (π₁ ∙ ⟨ [ f , g ] , [ h , k ] ⟩) ∙ inr
+                                     ≅⟨ cong (λ x → x ∙ inr) lawp1 ⟩
+                                     [ f , g ] ∙ inr
+                                     ≅⟨ law2 ⟩
+                                     g
+                                     ∎) 
+                                    (proof 
+                                     π₂ ∙ ⟨ [ f , g ] , [ h , k ] ⟩ ∙ inr
+                                     ≅⟨ sym ass ⟩
+                                     (π₂ ∙ ⟨ [ f , g ] , [ h , k ] ⟩) ∙ inr
+                                     ≅⟨ cong (λ x → x ∙ inr) lawp2 ⟩
+                                     [ h , k ] ∙ inr
+                                     ≅⟨ law2 ⟩
+                                     k
+                                     ∎))
 
 
-  -- [ f , g ] : (A + B) → C
-  -- [ h , k ] : (A + B) → D
+  -- [ f , g ] : Hom (A + B) C
+  -- [ h , k ] : Hom (A + B) D
   -- ...       : Hom (A + B) (C × D)
 
+  -- ⟨ f , h ⟩  : Hom A (C × D)
+  -- ⟨ g , k ⟩  : Hom B (C × D)
+  -- ...       : Hom (A + B) (C × D)

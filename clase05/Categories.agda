@@ -453,9 +453,9 @@ data ℕ : Set where
   zero : ℕ
   suc  : ℕ → ℕ
 
-data Fin : ℕ -> Set where
+data Fin : ℕ → Set where
   zero : {n : ℕ} → Fin (suc n)
-  suc  : {n : ℕ} → Fin n -> Fin (suc n)
+  suc  : {n : ℕ} → Fin n → Fin (suc n)
 
 record FiniteSet : Set₁ where
   constructor finiteSet
@@ -492,17 +492,20 @@ finite-prod {A} {B} {C} h2 h1 = finiteSetHom (λ x → fun h2 (fun h1 x)) (iso (
                                                  a
                                                  ∎
 
+sameinv : {X Y : Set} {f : X → Y} → (A B : IsoSet X Y f) → inv A ≡ inv B → A ≡ B
+sameinv (iso inv₁ law3 law4) (iso .inv₁ law5 law6) refl = cong₂ (λ x y → iso inv₁ x y) (ext (λ b → ir (law3 b) (law5 b))) (ext (λ a → ir (law4 a) (law6 a)))
+
+kk = cong-app
+
+sameiso : {X Y : Set} {f : X → Y} → (A B : IsoSet X Y f) → A ≡ B
+sameiso {X} {Y} {f} A B = sameinv A B (ext {!   !})
+                            where extra : (a : Y) → inv A a ≡ inv B a
+                                  extra a = {!   !}
+
 finite-eq : {A B : FiniteSet} {f g : FiniteSetHom A B} → fun f ≡ fun g → f ≡ g
-finite-eq {A} {B} {finiteSetHom .fun1 isoprop2} {finiteSetHom fun1 isoprop1} refl = cong (λ x → finiteSetHom fun1 x) (proof 
-                                                                                                                      isoprop2
-                                                                                                                      ≡⟨ {!   !} ⟩
-                                                                                                                      {!   !}
-                                                                                                                      ≡⟨ {!   !} ⟩
-                                                                                                                      {!   !}
-                                                                                                                      ≡⟨ {!   !} ⟩
-                                                                                                                      {!   !}
-                                                                                                                      ∎)
--- Se complicó mucho, algo hice mal
+finite-eq {A} {B} {finiteSetHom fun₁ isoprop₁} {finiteSetHom .fun₁ isoprop₂} refl = cong (finiteSetHom fun₁) (sameiso isoprop₁ isoprop₂)
+
+-- -- Se complicó mucho, algo hice mal
 
 FiniteCat : Cat
 FiniteCat = record
@@ -510,11 +513,12 @@ FiniteCat = record
   ; Hom = FiniteSetHom
   ; iden = finiteSetHom id (iso id (λ b → refl) (λ a → refl))
   ; _∙_ = finite-prod
-  ; idl = {!   !}
-  ; idr = {!   !}
-  ; ass = {!   !}
+  ; idl = finite-eq refl
+  ; idr = finite-eq refl
+  ; ass = finite-eq refl
   }
 
 --------------------------------------------------
 
 
+ 
