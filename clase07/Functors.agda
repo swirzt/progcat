@@ -103,18 +103,28 @@ MaybeF-comp nothing = refl
 MaybeF : Fun Sets Sets
 MaybeF = functor Maybe
                  mapMaybe
-                (ext (MaybeF-id))
-                 (ext (λ x → MaybeF-comp x))
+                 (ext MaybeF-id)
+                 (ext MaybeF-comp)
 
 
 -- Ejercicio: Funtor Lista
 open import Data.List.Base using (List ; [] ; _∷_) renaming (map to mapList) public
 
+ListF-id : {X : Obj Sets} → (L : List X) → mapList (iden Sets) L ≅ iden Sets L
+ListF-id [] = refl
+ListF-id (x ∷ L) = cong (x ∷_) (ListF-id L)
+
+ListF-comp : {X Y Z : Set} {f : Y → Z} {g : X → Y} →
+             (x : List X) → 
+             mapList (λ x → f (g x)) x ≅ mapList f (mapList g x)
+ListF-comp [] = refl
+ListF-comp {f = f} {g = g} (x ∷ L) = cong ((f (g x)) ∷_) (ListF-comp L)
+
 ListF : Fun Sets Sets
 ListF = functor List
                 mapList
-                {!!}
-                {!!}
+                (ext ListF-id)
+                (ext ListF-comp)
 
 -- Ejercicio EXTRA: Bifuntor de árboles con diferente información en nodos y hojas
 data Tree (A B : Set) : Set where
@@ -122,17 +132,61 @@ data Tree (A B : Set) : Set where
      node : (lt : Tree A B) → B → (rt : Tree A B) → Tree A B
 
 mapTree : ∀{A A' B B'} → (A → A') → (B → B') → Tree A B → Tree A' B'
-mapTree = {!!}
+mapTree f g (leaf x) = leaf (f x)
+mapTree f g (node t x t₁) = node (mapTree f g t) (g x) (mapTree f g t₁)
+
+TreeF-id : {X : Obj Sets × Obj Sets} → (T : Tree (fst X) (snd X)) →
+      mapTree (iden Sets) (iden Sets) T ≅ iden Sets T
+TreeF-id (leaf x) = refl
+TreeF-id (node TL x TR) = cong₂ (λ y z → node y x z) (TreeF-id TL) (TreeF-id TR)
+
+TreeF-comp : {X Y Z : Obj Sets × Obj Sets}
+      {f : Hom Sets (fst Y) (fst Z) × Hom Sets (snd Y) (snd Z)}
+      {g : Hom Sets (fst X) (fst Y) × Hom Sets (snd X) (snd Y)} →
+      (T : Tree (fst X) (snd X)) → 
+      (λ { (f , g) → mapTree f g })
+      ((λ { f g → (Sets ∙ fst f) (fst g) , (Sets ∙ snd f) (snd g) }) f g) T
+      ≅
+      (Sets ∙ (λ { (f , g) → mapTree f g }) f)
+      ((λ { (f , g) → mapTree f g }) g) T
+TreeF-comp (leaf x) = refl
+TreeF-comp (node TL x TR) = cong₂ (λ y z → node y x z) (TreeF-comp TL) (TreeF-comp TR)
 
 TreeF : Fun (Sets ×C Sets) Sets
-TreeF = {!!}
+TreeF = functor
+        (λ {(x , y) → Tree x y})
+        (λ {(f , g) → mapTree f g})
+        (ext TreeF-id)
+        (ext TreeF-comp)
 
 --------------------------------------------------
 {- Ejercicio: Hom functor : probar que el Hom de una categoría C
   es un bifunctor Hom : (C Op) ×C C → Sets
   -}
+
+
 HomF : ∀{a}{b}{C : Cat {a} {b}} → Fun ((C Op) ×C C) (Categories.Sets.Sets {b})
-HomF {C = C} = {!   !}
+HomF {C = C} = functor
+               (λ {(x , y) → Hom C x y})
+               (λ {(f , g) h → (g ∙c h) ∙c f})
+               (ext HomF-id)
+               {!   !}
+                where open Cat C using () renaming (_∙_ to _∙c_)
+                      HomF-id : {X : Obj C × Obj C} → (h : Hom C (fst X) (snd X)) → (iden C ∙c h) ∙c iden C ≅ h
+                      HomF-id h = proof
+                                  (iden C ∙c h) ∙c iden C
+                                  ≅⟨ cong (_∙c iden C) (idl C) ⟩
+                                  h ∙c iden C
+                                  ≅⟨ idr C ⟩
+                                  h
+                                  ∎
+                      HomF-comp : {X Y Z : Obj C × Obj C}
+                                  {f : Hom C (fst Z) (fst Y) × Hom C (snd Y) (snd Z)}
+                                  {g : Hom C (fst Y) (fst X) × Hom C (snd X) (snd Y)} →
+                                  (h : Hom C (fst X) (snd X)) → 
+                                  ((snd f ∙c snd g) ∙c h) ∙c fst g ∙c fst f ≅
+                                  (snd f ∙c (snd g ∙c h) ∙c fst g) ∙c fst f
+                      HomF-comp = {!   !}
 
 --------------------------------------------------
 {- Composición de funtores -}
