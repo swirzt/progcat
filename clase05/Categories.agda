@@ -497,13 +497,11 @@ sameinv (iso inv₁ law3 law4) (iso .inv₁ law5 law6) refl = cong₂ (λ x y �
 
 kk = cong-app
 
-sameiso : {X Y : Set} {f : X → Y} → (A B : IsoSet X Y f) → A ≡ B
-sameiso {X} {Y} {f} A B = sameinv A B (ext {!   !})
-                            where extra : (a : Y) → inv A a ≡ inv B a
-                                  extra a = {!   !}
+sameiso : {X Y : Set} {f : X → Y} → (A B : IsoSet X Y f) → inv A ≡ inv B
+sameiso {X} {Y} {f} A B = {!   !}
 
 finite-eq : {A B : FiniteSet} {f g : FiniteSetHom A B} → fun f ≡ fun g → f ≡ g
-finite-eq {A} {B} {finiteSetHom fun₁ isoprop₁} {finiteSetHom .fun₁ isoprop₂} refl = cong (finiteSetHom fun₁) (sameiso isoprop₁ isoprop₂)
+finite-eq {A} {B} {finiteSetHom fun₁ isoprop₁} {finiteSetHom .fun₁ isoprop₂} refl = {!   !}
 
 -- -- Se complicó mucho, algo hice mal
 
