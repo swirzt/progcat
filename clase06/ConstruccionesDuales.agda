@@ -29,12 +29,11 @@ InitialTerminalDuality (init i law) = term i law
 
 
  {- Probar que dos objetos iniciales son necesariamente isomorfos *usando dualidad* -}
-InitialIso : {D : Cat} 
-            (I I' : Obj D)
-            → (p : Initial D I)
-            → (q : Initial D I')
-            → Iso D (i p {I'})
-InitialIso {D} I I' p q with TerminalIso (D Op) I I' (InitialTerminalDuality p) (InitialTerminalDuality q)
+InitialIso : (I I' : Obj C)
+            → (p : Initial C I)
+            → (q : Initial C I')
+            → Iso C (i p {I'})
+InitialIso {C = C} I I' p q with TerminalIso (C Op) I I' (InitialTerminalDuality p) (InitialTerminalDuality q)
 ... | iso a b c = iso a c b
 
 
@@ -53,10 +52,10 @@ CoproductProductDuality (coproduct _+_ inl inr [_,_] law1 law2 law3) = prod _+_ 
 open Coproducts
 
  {- Probar que los coproductos son únicos hasta un isomorfismo usando dualidad -}
-CoproductIso : ∀{D : Cat}{A B}(X Y : Coproducts D) → Iso D ([_,_] X {A} {B} (inl Y) (inr Y))
-CoproductIso {D} X Y with ProductIso (D Op) (CoproductProductDuality X) (CoproductProductDuality Y)
+CoproductIso : ∀{A B}(X Y : Coproducts C) → Iso C ([_,_] X {A} {B} (inl Y) (inr Y))
+CoproductIso {C = C} X Y with ProductIso (C Op) (CoproductProductDuality X) (CoproductProductDuality Y)
 ... | iso inv rinv linv = iso inv linv rinv
 
 
 --------------------------------------------------
- 
+  
