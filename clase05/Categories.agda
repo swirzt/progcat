@@ -512,13 +512,11 @@ finite-eq {A} {B} {finiteSetHom f₁ isop₁} {finiteSetHom .f₁ isop₂} refl 
     cong (finiteSetHom f₁)
          (sameiso isop₁ isop₂ (sameinv isop₁ isop₂))
 
--- -- Se complicó mucho, algo hice mal
-
 FiniteCat : Cat
 FiniteCat = record
   { Obj = FiniteSet
   ; Hom = FiniteSetHom
-  ; iden = finiteSetHom id (iso id (λ b → refl) (λ a → refl))
+  ; iden = finiteSetHom id (iso id (λ _ → refl) (λ _ → refl))
   ; _∙_ = finite-prod
   ; idl = finite-eq refl
   ; idr = finite-eq refl
