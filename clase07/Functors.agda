@@ -135,30 +135,26 @@ mapTree : ∀{A A' B B'} → (A → A') → (B → B') → Tree A B → Tree A' 
 mapTree f g (leaf x) = leaf (f x)
 mapTree f g (node t x t₁) = node (mapTree f g t) (g x) (mapTree f g t₁)
 
-TreeF-id : {X : Obj Sets × Obj Sets} → (T : Tree (fst X) (snd X)) →
-      mapTree (iden Sets) (iden Sets) T ≅ iden Sets T
-TreeF-id (leaf x) = refl
-TreeF-id (node TL x TR) = cong₂ (λ y z → node y x z) (TreeF-id TL) (TreeF-id TR)
-
-TreeF-comp : {X Y Z : Obj Sets × Obj Sets}
-      {f : Hom Sets (fst Y) (fst Z) × Hom Sets (snd Y) (snd Z)}
-      {g : Hom Sets (fst X) (fst Y) × Hom Sets (snd X) (snd Y)} →
-      (T : Tree (fst X) (snd X)) → 
-      (λ { (f , g) → mapTree f g })
-      ((λ { f g → (Sets ∙ fst f) (fst g) , (Sets ∙ snd f) (snd g) }) f g) T
-      ≅
-      (Sets ∙ (λ { (f , g) → mapTree f g }) f)
-      ((λ { (f , g) → mapTree f g }) g) T
-TreeF-comp (leaf x) = refl
-TreeF-comp (node TL x TR) = cong₂ (λ y z → node y x z) (TreeF-comp TL) (TreeF-comp TR)
-
 TreeF : Fun (Sets ×C Sets) Sets
 TreeF = functor
         (λ {(x , y) → Tree x y})
         (λ {(f , g) → mapTree f g})
         (ext TreeF-id)
-        (ext TreeF-comp)
-
+        (ext TreeF-comp) --(ext TreeF-comp)
+        where TreeF-id : {X : Obj Sets × Obj Sets} → (T : Tree (fst X) (snd X)) →
+                         mapTree (iden Sets) (iden Sets) T ≅ iden Sets T
+              TreeF-id (leaf x) = refl
+              TreeF-id (node TL x TR) = cong₂ (λ y z → node y x z) (TreeF-id TL) (TreeF-id TR)
+              TreeF-comp : {X Y Z : Obj Sets × Obj Sets}
+                           {f : Hom Sets (fst Y) (fst Z) × Hom Sets (snd Y) (snd Z)}
+                           {g : Hom Sets (fst X) (fst Y) × Hom Sets (snd X) (snd Y)} →
+                           (T : Tree (fst X) (snd X)) → 
+                           mapTree (λ x → fst f (fst g x)) (λ x → snd f (snd g x)) T
+                           ≅
+                           mapTree (fst f) (snd f) (mapTree (fst g) (snd g) T)
+              TreeF-comp (leaf _) = refl
+              TreeF-comp {f = f} {g = g} (node TL x TR) = cong₂ (λ y z → node y (snd f (snd g x)) z) (TreeF-comp TL) (TreeF-comp TR)
+              
 --------------------------------------------------
 {- Ejercicio: Hom functor : probar que el Hom de una categoría C
   es un bifunctor Hom : (C Op) ×C C → Sets
@@ -170,7 +166,7 @@ HomF {C = C} = functor
                (λ {(x , y) → Hom C x y})
                (λ {(f , g) h → (g ∙c h) ∙c f})
                (ext HomF-id)
-               {!   !}
+               (ext HomF-comp)
                 where open Cat C using () renaming (_∙_ to _∙c_)
                       HomF-id : {X : Obj C × Obj C} → (h : Hom C (fst X) (snd X)) → (iden C ∙c h) ∙c iden C ≅ h
                       HomF-id h = proof
@@ -186,7 +182,15 @@ HomF {C = C} = functor
                                   (h : Hom C (fst X) (snd X)) → 
                                   ((snd f ∙c snd g) ∙c h) ∙c fst g ∙c fst f ≅
                                   (snd f ∙c (snd g ∙c h) ∙c fst g) ∙c fst f
-                      HomF-comp = {!   !}
+                      HomF-comp {f = f} {g = g} h = proof
+                                    ((snd f ∙c snd g) ∙c h) ∙c (fst g ∙c fst f)
+                                    ≅⟨ cong (_∙c (fst g ∙c fst f)) (ass C) ⟩
+                                    ((snd f ∙c (snd g ∙c h)) ∙c (fst g ∙c fst f))
+                                    ≅⟨ sym (ass C) ⟩
+                                    ((snd f ∙c (snd g ∙c h)) ∙c fst g) ∙c fst f
+                                    ≅⟨ cong (_∙c fst f) (ass C) ⟩
+                                    (snd f ∙c ((snd g ∙c h) ∙c fst g)) ∙c fst f
+                                    ∎
 
 --------------------------------------------------
 {- Composición de funtores -}
@@ -196,16 +200,23 @@ _○_ {D = D}{E = E}{C = C} F G =
        open Cat D using () renaming (_∙_ to _∙d_)
        open Cat E using () renaming (_∙_ to _∙e_)
    in functor 
-    (OMap F ∘ OMap G) 
-     (HMap F ∘ HMap G) 
-     (proof         
+      (OMap F ∘ OMap G) 
+      (HMap F ∘ HMap G) 
+      (proof         
        HMap F (HMap G (iden C))       
-      ≅⟨ cong (HMap F) (fid G) ⟩
+       ≅⟨ cong (HMap F) (fid G) ⟩
        HMap F (iden D) 
-      ≅⟨ fid F ⟩
+       ≅⟨ fid F ⟩
        iden E
-     ∎) 
-     {!   !}
+       ∎)
+      λ {_ _ _ f g} →
+      (proof 
+       HMap F (HMap G (f ∙c g))
+       ≅⟨ cong (HMap F) (fcomp G) ⟩
+       HMap F (HMap G f ∙d HMap G g)
+       ≅⟨ fcomp F ⟩
+       HMap F (HMap G f) ∙e HMap F (HMap G g)
+       ∎)
     
 infixr 10 _○_
 
@@ -219,11 +230,11 @@ infixr 10 _○_
 -}
 FunctorEq : (F G : Fun C D)
          →  OMap F ≅ OMap G
-         →  (λ {X Y} → HMap F {X}{Y}) ≅ (λ {X}{Y} → HMap G {X}{Y})
+         →  (λ {X Y} → HMap F {X}{Y}) ≅ (λ {X Y} → HMap G {X}{Y})
          → F ≅ G
 FunctorEq (functor OMap₁ HMap₁ fid₁ fcomp₁) (functor .OMap₁ .HMap₁ fid₂ fcomp₂) refl refl = 
-     cong₂ (functor OMap₁ HMap₁) (iext (λ a → ir _ _))
-        (iext (λ a → iext (λ a₁ → iext (λ a₂ → iext (λ a₃ → iext (λ a₄ → ir _ _))))))
+     cong₂ (functor OMap₁ HMap₁) (iext (λ _ → ir _ _))
+        (iext (λ _ → iext (λ _ → iext (λ _ → iext (λ _ → iext (λ _ → ir _ _))))))
 
 --------------------------------------------------
 
@@ -258,12 +269,72 @@ open import Categories.Iso
 
 FunIso : (F : Fun C D) → ∀{X Y}(f : Hom C X Y)
        → Iso C f → Iso D (HMap F f)
-FunIso  = {! !}
+FunIso {C = C} {D = D} F f (iso inv rinv linv) =
+  let open Cat C using () renaming (_∙_ to _∙c_)
+      open Cat D using () renaming (_∙_ to _∙d_)
+  in iso (HMap F inv)
+         (proof
+          (HMap F f ∙d HMap F inv)
+          ≅⟨ sym (fcomp F) ⟩
+          HMap F (f ∙c inv)
+          ≅⟨ cong (HMap F) rinv ⟩
+          HMap F (iden C)
+          ≅⟨ fid F ⟩
+          iden D
+          ∎)
+         (proof
+          (HMap F inv ∙d HMap F f)
+          ≅⟨ sym (fcomp F) ⟩
+          HMap F (inv ∙c f)
+          ≅⟨ cong (HMap F) linv ⟩
+          HMap F (iden C)
+          ≅⟨ fid F ⟩
+          iden D
+          ∎)
 
 --------------------------------------------------
 {- Ejercicio EXTRA: Sea C una categoría con productos. Probar
  que el producto _×_ es un functor C × C → C. -}
 
+open import Categories.Products 
+
+Fun× : Products C  → Fun (C ×C C) C
+Fun× {C = C} (prod _×p_ π₁ π₂ ⟨_,_⟩ law1 law2 law3) =
+    let open Cat C using () renaming (_∙_ to _∙c_)
+    in functor
+      (λ {(x , y) → x ×p y})
+      (λ {(f , g) → ⟨ f ∙c π₁ , g ∙c π₂ ⟩})
+      (sym (law3 
+            (trans (idr C) (sym (idl C)))
+            (trans (idr C) (sym (idl C)))))
+      λ {_ _ _ f g} → 
+      (sym (law3
+            (proof 
+             π₁ ∙c ⟨ fst f ∙c π₁ , snd f ∙c π₂ ⟩ ∙c ⟨ fst g ∙c π₁ , snd g ∙c π₂ ⟩
+             ≅⟨ sym (ass C) ⟩
+             (π₁ ∙c ⟨ fst f ∙c π₁ , snd f ∙c π₂ ⟩) ∙c ⟨ fst g ∙c π₁ , snd g ∙c π₂ ⟩
+             ≅⟨ cong (_∙c  ⟨ fst g ∙c π₁ , snd g ∙c π₂ ⟩) law1 ⟩
+             (fst f ∙c π₁) ∙c ⟨ fst g ∙c π₁ , snd g ∙c π₂ ⟩
+             ≅⟨ ass C ⟩
+             fst f ∙c π₁ ∙c ⟨ fst g ∙c π₁ , snd g ∙c π₂ ⟩
+             ≅⟨ cong (fst f ∙c_) law1 ⟩
+             fst f ∙c fst g ∙c π₁
+             ≅⟨ sym (ass C) ⟩
+             (fst f ∙c fst g) ∙c π₁
+             ∎)
+            (proof 
+             π₂ ∙c ⟨ fst f ∙c π₁ , snd f ∙c π₂ ⟩ ∙c ⟨ fst g ∙c π₁ , snd g ∙c π₂ ⟩
+             ≅⟨ sym (ass C) ⟩
+             (π₂ ∙c ⟨ fst f ∙c π₁ , snd f ∙c π₂ ⟩) ∙c ⟨ fst g ∙c π₁ , snd g ∙c π₂ ⟩
+             ≅⟨ cong (_∙c  ⟨ fst g ∙c π₁ , snd g ∙c π₂ ⟩) law2 ⟩
+             (snd f ∙c π₂) ∙c ⟨ fst g ∙c π₁ , snd g ∙c π₂ ⟩
+             ≅⟨ ass C ⟩
+             snd f ∙c π₂ ∙c ⟨ fst g ∙c π₁ , snd g ∙c π₂ ⟩
+             ≅⟨ cong (snd f ∙c_) law2 ⟩
+             snd f ∙c snd g ∙c π₂
+             ≅⟨ sym (ass C) ⟩
+             (snd f ∙c snd g) ∙c π₂
+             ∎)))
 
 {- Ejercicio EXTRA*: En una clase anterior definimos un Monoide M como
    categoría (MonCat M) con un solo objeto.  Probar que dar funtor F :
