@@ -492,26 +492,25 @@ finite-prod {A} {B} {C} h2 h1 = finiteSetHom (λ x → fun h2 (fun h1 x)) (iso (
                                                  a
                                                  ∎
 
-sameinv : {X Y : Set} {f : X → Y} → (A B : IsoSet X Y f) → inv A ≡ inv B → A ≡ B
-sameinv (iso inv₁ law3 law4) (iso .inv₁ law5 law6) refl = cong₂ (λ x y → iso inv₁ x y) (ext (λ b → ir (law3 b) (law5 b))) (ext (λ a → ir (law4 a) (law6 a)))
-
-kk = cong-app
-
-sameiso : {X Y : Set} {f : X → Y} → (A B : IsoSet X Y f) → inv A ≡ inv B
-sameiso {X} {Y} {f} A B = ext (λ a → proof 
+sameinv : {X Y : Set} {f : X → Y} → (A B : IsoSet X Y f) → inv A ≡ inv B
+sameinv {X} {Y} {f} A B = ext (λ a → proof 
                                      inv A a
-                                     ≡⟨ sym (law2 A {!   !}) ⟩
-                                     {!   !}
-                                     ≡⟨ {!   !} ⟩
-                                     {!   !}
-                                     ≡⟨ {!   !} ⟩
-                                     {!   !}
-                                     ≡⟨ {!   !} ⟩
+                                     ≡⟨ sym (law2 B (inv A a)) ⟩
+                                     inv B (f (inv A a))
+                                     ≡⟨ cong (inv B) (law1 A a) ⟩
                                      inv B a
                                      ∎)
 
+sameiso : {X Y : Set} {f : X → Y} → (A B : IsoSet X Y f) → inv A ≡ inv B → A ≡ B
+sameiso (iso inv₁ law3 law4) (iso .inv₁ law5 law6) refl =
+      cong₂ (iso inv₁)
+            (ext (λ a → ir (law3 a) (law5 a)))
+            (ext (λ b → ir (law4 b) (law6 b)))
+
 finite-eq : {A B : FiniteSet} {f g : FiniteSetHom A B} → fun f ≡ fun g → f ≡ g
-finite-eq {A} {B} {finiteSetHom fun₁ isoprop₁} {finiteSetHom .fun₁ isoprop₂} refl = {!   !}
+finite-eq {A} {B} {finiteSetHom f₁ isop₁} {finiteSetHom .f₁ isop₂} refl =
+    cong (finiteSetHom f₁)
+         (sameiso isop₁ isop₂ (sameinv isop₁ isop₂))
 
 -- -- Se complicó mucho, algo hice mal
 
