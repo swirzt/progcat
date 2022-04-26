@@ -344,4 +344,19 @@ Fun× {C = C} (prod _×p_ π₁ π₂ ⟨_,_⟩ law1 law2 law3) =
       ya que usamos otra definición de categoría.
 -}
 
+open import Categories.MonCat
+open Monoid 
+FunMon : {M N : Monoid} → (F : Fun (MonCat M) (MonCat N)) → Is-Monoid-Homo M N (HMap F)
+FunMon {M} {N} (functor OMap HMap fid fcomp) = 
+  let open Monoid M renaming (_∙_ to _∙m_)
+      open Monoid N renaming (_∙_ to _∙n_)
+  in monhom fid fcomp
 
+MonFun : {M N : Monoid} {f : Carrier M → Carrier N} → Is-Monoid-Homo M N f → Fun (MonCat M) (MonCat N)
+MonFun {M} {N} {f} (monhom preserves-unit preserves-mult) =
+  let open Monoid M renaming (_∙_ to _∙m_)
+      open Monoid N renaming (_∙_ to _∙n_)
+  in functor id f preserves-unit preserves-mult
+
+FunMonFun : {M N : Monoid} {f : Carrier M → Carrier N} → (F : Fun (MonCat M) (MonCat N)) → Is-Monoid-Homo M N f → HMap F ≅ f
+FunMonFun {M} {N} {f} (functor OMap HMap fid fcomp) (monhom preserves-unit preserves-mult) = ext (λ x → {!   !})
