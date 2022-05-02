@@ -142,15 +142,37 @@ module Ejemplos where
   implícita. El operador λ- convierte una función implícita en explícita.
 -}
 
+ mapListId : ∀{X Y : Set} {f : X → Y} (xs ys : List X) → mapList f (xs ++ ys) ≅ mapList f xs ++ mapList f ys
+ mapListId {f = f} [] ys = refl
+ mapListId {f = f} (x ∷ xs) ys = cong (f x ∷_) (mapListId xs ys)
+
+ concat-naturality : ∀{X Y : Set}{f : X → Y}(xs : List(List X)) → 
+                     mapList f (foldr _++_ [] xs)
+                     ≅
+                     foldr _++_ [] (mapList (mapList f) xs)
+ concat-naturality [] = refl
+ concat-naturality {f = f} (xs ∷ xss) = proof
+                                   mapList f (xs ++ foldr _++_ [] xss)
+                                   ≅⟨ mapListId xs (foldr _++_  [] xss) ⟩
+                                   mapList f xs ++ mapList f (foldr _++_ [] xss)
+                                   ≅⟨ cong (mapList f xs ++_) (concat-naturality xss) ⟩
+                                   mapList f xs ++ foldr _++_ [] (mapList (mapList f) xss)
+                                   ∎
+
 -- Ejercicio: probar que concat es una transformación natural
  concatNat : NatT (ListF ○ ListF) ListF
- concatNat = {!   !} 
+ concatNat = natural (λ _ → concat) (ext concat-naturality) 
 
- --
+ 
+ length-naturality : ∀{X Y : Set}{f : X → Y}(x : List X) →
+      foldr (λ _ → suc) 0 x ≅ foldr (λ _ → suc) 0 (mapList f x)
+ length-naturality [] = refl
+ length-naturality (x ∷ xs) = cong suc (length-naturality xs)
 -- Ejercicio: probar que length es una transformación natural
 -- ¿Entre qué funtores es una transformación natural?
- lengthNat : NatT {!   !} {!   !}
- lengthNat = {!   !}
+ lengthNat : NatT ListF (K ℕ)
+ lengthNat = natural (λ- length)
+                     (ext length-naturality)
 
 -- Ejercicio: probar que safehead es una transformación natural
  safeHead : {A : Set} → List A → Maybe A
@@ -158,7 +180,9 @@ module Ejemplos where
  safeHead (x ∷ xs) = just x
 
  headNat : NatT ListF MaybeF
- headNat = {!   !}
+ headNat = natural (λ- safeHead)
+                   (ext λ {[] → refl
+                         ; (x ∷ xs) → refl})
  
  --
 --------------------------------------------------
@@ -232,6 +256,33 @@ compNatF {D = D} {E = E} {C = C} {J} {K} t F =
                in natural (λ X → η (OMap F X)) 
                           (nat t) 
 
+
+
+-- compVNat : ∀{F G H : Fun C D} → 
+--           NatT G H → NatT F G → NatT F H
+-- compVNat {D = D}{F}{G}{H} α β = let open Cat D 
+--    in natural 
+--         (λ X → cmp α X ∙ cmp β X) 
+--         (λ {X} {Y} {f} → proof 
+--          (HMap H f ∙ cmp α X ∙ cmp β X)  ≅⟨ sym ass ⟩
+--         ((HMap H f ∙ cmp α X) ∙ cmp β X)  ≅⟨ congl (nat α) ⟩
+--         ((cmp α Y ∙ HMap G f) ∙ cmp β X)  ≅⟨ ass ⟩
+--         (cmp α Y ∙ HMap G f ∙ cmp β X)  ≅⟨ congr (nat β) ⟩
+--         (cmp α Y ∙ cmp β Y ∙ HMap F f)  ≅⟨ sym ass ⟩
+--         ((cmp α Y ∙ cmp β Y) ∙ HMap F f) 
+--         ∎)
+-- {- Se componen componente a componente 
+--       FX        FX
+--       |         |
+--       βX        |
+--       ↓         |
+--       GX     compVNat α β X
+--       |         |
+--       αX        |
+--       ↓         ↓
+--       HX        HX
+-- -}
+
 --------------------------------------------------
 -- Composición horizontal
 compHNat : ∀{F G : Fun C D}{J K : Fun D E}
@@ -240,7 +291,7 @@ compHNat : ∀{F G : Fun C D}{J K : Fun D E}
 compHNat {D = D}{E = E}{F = F}{G} {J}{K} η ε = 
    let open Cat E
        open Cat D using () renaming (_∙_ to _∙D_)
-   in natural {!   !}
+   in natural (λ X → cmp ε (OMap G X) ∙ HMap J (cmp η X))
               λ {X Y f} → 
               proof 
               {!   !}  ≅⟨  {!   !} ⟩
