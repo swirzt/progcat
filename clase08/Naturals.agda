@@ -50,7 +50,6 @@ NatTEq {α = natural cmp₁ nat₁} {natural .cmp₁ nat₂} refl
    = cong (natural cmp₁) 
        (iext (λ _ → iext (λ _ → iext (λ _ → ir nat₁ _))))
 
-
 -- NatTEq2 se puede usar cuando los funtores intervinientes no son definicionalmente iguales
 NatTEq2 : ∀ {F G F' G' : Fun C D}
             {α : NatT F G}{β : NatT F' G'}
@@ -65,8 +64,6 @@ idNat : ∀{F : Fun C D} → NatT F F
 idNat {D = D}{F = F} = let open Cat D 
      in  natural (λ X → iden {OMap F X}) 
                  (trans idr (sym idl))
-
-
 
 -- Composición (vertical) de transformaciones naturales
 compVNat : ∀{F G H : Fun C D} → 
@@ -93,7 +90,6 @@ compVNat {D = D}{F}{G}{H} α β = let open Cat D
       ↓         ↓
       HX        HX
 -}
-
 
 --------------------------------------------------
 {- Categorías de funtores
@@ -152,12 +148,12 @@ module Ejemplos where
                      foldr _++_ [] (mapList (mapList f) xs)
  concat-naturality [] = refl
  concat-naturality {f = f} (xs ∷ xss) = proof
-                                   mapList f (xs ++ foldr _++_ [] xss)
-                                   ≅⟨ mapListId xs (foldr _++_  [] xss) ⟩
-                                   mapList f xs ++ mapList f (foldr _++_ [] xss)
-                                   ≅⟨ cong (mapList f xs ++_) (concat-naturality xss) ⟩
-                                   mapList f xs ++ foldr _++_ [] (mapList (mapList f) xss)
-                                   ∎
+                                        mapList f (xs ++ foldr _++_ [] xss)
+                                        ≅⟨ mapListId xs (foldr _++_  [] xss) ⟩
+                                        mapList f xs ++ mapList f (foldr _++_ [] xss)
+                                        ≅⟨ cong (mapList f xs ++_) (concat-naturality xss) ⟩
+                                        mapList f xs ++ foldr _++_ [] (mapList (mapList f) xss)
+                                        ∎
 
 -- Ejercicio: probar que concat es una transformación natural
  concatNat : NatT (ListF ○ ListF) ListF
@@ -182,7 +178,7 @@ module Ejemplos where
  headNat : NatT ListF MaybeF
  headNat = natural (λ- safeHead)
                    (ext λ {[] → refl
-                         ; (x ∷ xs) → refl})
+                         ; (_ ∷ _) → refl})
  
  --
 --------------------------------------------------
@@ -199,6 +195,8 @@ record NatIso {a b c d}{C : Cat {a} {b}}{D : Cat {c} {d}}
 {- EJERCICIO EXTRA: (Intentar solo si terminaron el resto)
   Equivalentemente, un isomorfismo natural es un isomorfismo en FunctorCat 
 -}
+
+-- isoIso : NatIso → 
 
 --------------------------------------------------
 -- composición con funtor (a izquierda y a derecha)
@@ -221,18 +219,18 @@ compFNat {D = D} {E = E} {F} {G} J t =
                let open NatT t renaming (cmp to η)
                    open Cat D renaming (_∙_ to _∙D_)
                    open Cat E renaming (_∙_ to _∙E_)
-               in
-               natural (λ X → HMap J (η X))
+     in natural (λ X → HMap J (η X))
                 (λ {X Y f} → proof
-                  (HMap J (HMap G f) ∙E HMap J (η X))  
-                ≅⟨ sym (fcomp J) ⟩
-                  HMap J (HMap G f ∙D η X)  
-                ≅⟨ cong (HMap J) (nat t) ⟩
-                  HMap J (η Y ∙D HMap F f) 
-               ≅⟨ fcomp J ⟩
-                 (HMap J (η Y) ∙E HMap J (HMap F f))  ≅⟨ refl ⟩
-                  (HMap J (η Y) ∙E HMap (J ○ F) f)
-                ∎ )
+                             HMap J (HMap G f) ∙E HMap J (η X)  
+                             ≅⟨ sym (fcomp J) ⟩
+                             HMap J (HMap G f ∙D η X)  
+                             ≅⟨ cong (HMap J) (nat t) ⟩
+                             HMap J (η Y ∙D HMap F f) 
+                             ≅⟨ fcomp J ⟩
+                             HMap J (η Y) ∙E HMap J (HMap F f)
+                             ≅⟨ refl ⟩
+                             HMap J (η Y) ∙E HMap (J ○ F) f
+                             ∎ )
 
 {-
 compNatF
@@ -256,33 +254,6 @@ compNatF {D = D} {E = E} {C = C} {J} {K} t F =
                in natural (λ X → η (OMap F X)) 
                           (nat t) 
 
-
-
--- compVNat : ∀{F G H : Fun C D} → 
---           NatT G H → NatT F G → NatT F H
--- compVNat {D = D}{F}{G}{H} α β = let open Cat D 
---    in natural 
---         (λ X → cmp α X ∙ cmp β X) 
---         (λ {X} {Y} {f} → proof 
---          (HMap H f ∙ cmp α X ∙ cmp β X)  ≅⟨ sym ass ⟩
---         ((HMap H f ∙ cmp α X) ∙ cmp β X)  ≅⟨ congl (nat α) ⟩
---         ((cmp α Y ∙ HMap G f) ∙ cmp β X)  ≅⟨ ass ⟩
---         (cmp α Y ∙ HMap G f ∙ cmp β X)  ≅⟨ congr (nat β) ⟩
---         (cmp α Y ∙ cmp β Y ∙ HMap F f)  ≅⟨ sym ass ⟩
---         ((cmp α Y ∙ cmp β Y) ∙ HMap F f) 
---         ∎)
--- {- Se componen componente a componente 
---       FX        FX
---       |         |
---       βX        |
---       ↓         |
---       GX     compVNat α β X
---       |         |
---       αX        |
---       ↓         ↓
---       HX        HX
--- -}
-
 --------------------------------------------------
 -- Composición horizontal
 compHNat : ∀{F G : Fun C D}{J K : Fun D E}
@@ -294,14 +265,21 @@ compHNat {D = D}{E = E}{F = F}{G} {J}{K} η ε =
    in natural (λ X → cmp ε (OMap G X) ∙ HMap J (cmp η X))
               λ {X Y f} → 
               proof 
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}
+              HMap (K ○ G) f ∙ cmp ε (OMap G X) ∙ HMap J (cmp η X)
+              ≅⟨  sym ass ⟩
+              (HMap (K ○ G) f ∙ cmp ε (OMap G X)) ∙ HMap J (cmp η X)
+              ≅⟨  congl (nat ε) ⟩
+              (cmp ε (OMap G Y) ∙ HMap J (HMap G f)) ∙ HMap J (cmp η X)
+              ≅⟨  ass ⟩
+              cmp ε (OMap G Y) ∙ HMap J (HMap G f) ∙ HMap J (cmp η X)
+              ≅⟨  congr (sym (fcomp J)) ⟩
+              cmp ε (OMap G Y) ∙ HMap J (HMap G f ∙D cmp η X)
+              ≅⟨  congr (cong (HMap J) (nat η)) ⟩
+              cmp ε (OMap G Y) ∙ HMap J (cmp η Y ∙D HMap F f)
+              ≅⟨  congr (fcomp J) ⟩
+              cmp ε (OMap G Y) ∙ HMap J (cmp η Y) ∙ HMap J (HMap F f)
+              ≅⟨  sym ass ⟩
+              (cmp ε (OMap G Y) ∙ HMap J (cmp η Y)) ∙ HMap (J ○ F) f
               ∎
 
 {-     --F-->   --J--> 
@@ -317,8 +295,6 @@ compHNat {D = D}{E = E}{F = F}{G} {J}{K} η ε =
 
 -}
 
-
-
 -- La composición horizontal es asociativa
 compHNat-assoc : ∀{a1 b1 a2 b2 a3 b3 a4 b4}
                     {C1 : Cat {a1} {b1}}{C2 : Cat {a2} {b2}}{C3 : Cat {a3} {b3}}{C4 : Cat {a4} {b4}}
@@ -328,8 +304,9 @@ compHNat-assoc : ∀{a1 b1 a2 b2 a3 b3 a4 b4}
 compHNat-assoc {C3 = C3}{C4 = C4}{F}{G}{J}{K}{L}{M} (natural cmp1 _) (natural cmp2 _) (natural cmp3 _) =
                    let open Cat C4 renaming (_∙_ to  _∙4_)
                        open Cat C3 using () renaming (_∙_ to  _∙3_)                         
-                   in
-                     {!   !}
+                   in NatTEq2 (Functor-Eq (ext (λ- refl)) (iext (λ _ → iext (λ _ → ext (λ- refl)))))
+                              (Functor-Eq (ext (λ- refl)) (iext (λ _ → iext (λ _ → ext (λ- refl)))))
+                              (ext (λ _ → trans (congr (fcomp L)) (sym ass)))
 
 -- ley de intercambio
 interchange : ∀ {F G H : Fun C D}{I J K : Fun D E}
@@ -341,7 +318,21 @@ interchange {D = D}{E = E}{F = F}{G}{H}{I = I}{J} (natural α _) (natural β _) 
               open Cat D using () renaming (_∙_ to _∙D_)
               open Cat E
            in
-           {!   !}
+           NatTEq (ext (λ x → proof
+                              (δ (OMap H x) ∙ γ (OMap H x)) ∙ HMap I (β x ∙D α x)
+                              ≅⟨ congr (fcomp I) ⟩
+                              (δ (OMap H x) ∙ γ (OMap H x)) ∙ (HMap I (β x) ∙ HMap I (α x))
+                              ≅⟨ sym ass ⟩
+                              ((δ (OMap H x) ∙ γ (OMap H x)) ∙ HMap I (β x)) ∙ HMap I (α x)
+                              ≅⟨ congl ass ⟩
+                              (δ (OMap H x) ∙ (γ (OMap H x) ∙ HMap I (β x))) ∙ HMap I (α x)
+                              ≅⟨ congl (congr (sym natγ)) ⟩
+                              (δ (OMap H x) ∙ (HMap J (β x) ∙ γ (OMap G x))) ∙ HMap I (α x)
+                              ≅⟨ congl (sym ass) ⟩
+                              (((δ (OMap H x) ∙ HMap J (β x)) ∙ γ (OMap G x)) ∙ HMap I (α x))
+                              ≅⟨ ass ⟩
+                              (δ (OMap H x) ∙ HMap J (β x)) ∙ (γ (OMap G x) ∙ HMap I (α x))
+                              ∎))
 
 open import Categories.Coproducts
 
@@ -358,4 +349,62 @@ module FunctorCoproduct (cop : Coproducts C) where
 
  copairF : ∀{F G H K} →
           (NatT {C = D} F H) → (NatT G K) → NatT (F +F G) (H +F K)
- copairF = {!   !} 
+ copairF {F = F} {G} {H} {K} (natural cmp₁ nat₁) (natural cmp₂ nat₂) =
+              natural (λ X → [ inl ∙ (cmp₁ X) , inr ∙ (cmp₂ X) ])
+                      λ {X Y f} → trans
+                                  (law3 (proof
+                                         ([ inl ∙ HMap H f , inr ∙ HMap K f ] ∙ [ inl ∙ cmp₁ X , inr ∙ cmp₂ X ]) ∙ inl
+                                         ≅⟨ ass ⟩
+                                         [ inl ∙ HMap H f , inr ∙ HMap K f ] ∙ [ inl ∙ cmp₁ X , inr ∙ cmp₂ X ] ∙ inl
+                                         ≅⟨ congr law1 ⟩
+                                         [ inl ∙ HMap H f , inr ∙ HMap K f ] ∙  inl ∙ cmp₁ X
+                                         ≅⟨ sym ass ⟩
+                                         ([ inl ∙ HMap H f , inr ∙ HMap K f ] ∙  inl) ∙ cmp₁ X
+                                         ≅⟨ congl law1 ⟩
+                                         (inl ∙ HMap H f) ∙ cmp₁ X
+                                         ≅⟨ ass ⟩
+                                         inl ∙ HMap H f ∙ cmp₁ X
+                                         ∎)
+                                        (proof
+                                         ([ inl ∙ HMap H f , inr ∙ HMap K f ] ∙ [ inl ∙ cmp₁ X , inr ∙ cmp₂ X ]) ∙ inr
+                                         ≅⟨ ass ⟩
+                                         [ inl ∙ HMap H f , inr ∙ HMap K f ] ∙ [ inl ∙ cmp₁ X , inr ∙ cmp₂ X ] ∙ inr
+                                         ≅⟨ congr law2 ⟩
+                                         [ inl ∙ HMap H f , inr ∙ HMap K f ] ∙ inr ∙ cmp₂ X
+                                         ≅⟨ sym ass ⟩
+                                         ([ inl ∙ HMap H f , inr ∙ HMap K f ] ∙  inr) ∙ cmp₂ X
+                                         ≅⟨ congl law2 ⟩
+                                         (inr ∙ HMap K f) ∙ cmp₂ X
+                                         ≅⟨ ass ⟩
+                                         inr ∙ HMap K f ∙ cmp₂ X
+                                         ∎))
+                             (sym (law3 (proof
+                                         ([ inl ∙ cmp₁ Y , inr ∙ cmp₂ Y ] ∙ [ inl ∙ HMap F f , inr ∙ HMap G f ]) ∙ inl
+                                         ≅⟨ ass ⟩
+                                         [ inl ∙ cmp₁ Y , inr ∙ cmp₂ Y ] ∙ [ inl ∙ HMap F f , inr ∙ HMap G f ] ∙ inl
+                                         ≅⟨ congr law1 ⟩
+                                         [ inl ∙ cmp₁ Y , inr ∙ cmp₂ Y ] ∙  inl ∙ HMap F f
+                                         ≅⟨ sym ass ⟩
+                                         ([ inl ∙ cmp₁ Y , inr ∙ cmp₂ Y ] ∙  inl) ∙ HMap F f
+                                         ≅⟨ congl law1 ⟩
+                                         (inl ∙ cmp₁ Y) ∙ HMap F f
+                                         ≅⟨ ass ⟩
+                                         inl ∙ cmp₁ Y ∙ HMap F f
+                                         ≅⟨ congr (sym nat₁) ⟩
+                                         inl ∙ HMap H f ∙ cmp₁ X
+                                         ∎)
+                                        (proof
+                                         ([ inl ∙ cmp₁ Y , inr ∙ cmp₂ Y ] ∙ [ inl ∙ HMap F f , inr ∙ HMap G f ]) ∙ inr
+                                         ≅⟨ ass ⟩
+                                         [ inl ∙ cmp₁ Y , inr ∙ cmp₂ Y ] ∙ [ inl ∙ HMap F f , inr ∙ HMap G f ] ∙ inr
+                                         ≅⟨ congr law2 ⟩
+                                         [ inl ∙ cmp₁ Y , inr ∙ cmp₂ Y ] ∙  inr ∙ HMap G f
+                                         ≅⟨ sym ass ⟩
+                                         ([ inl ∙ cmp₁ Y , inr ∙ cmp₂ Y ] ∙  inr) ∙ HMap G f
+                                         ≅⟨ congl law2 ⟩
+                                         (inr ∙ cmp₂ Y) ∙ HMap G f
+                                         ≅⟨ ass ⟩
+                                         inr ∙ cmp₂ Y ∙ HMap G f
+                                         ≅⟨ congr (sym nat₂) ⟩
+                                         inr ∙ HMap K f ∙ cmp₂ X
+                                         ∎)))
