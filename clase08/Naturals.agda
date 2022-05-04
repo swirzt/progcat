@@ -138,8 +138,9 @@ module Ejemplos where
   implícita. El operador λ- convierte una función implícita en explícita.
 -}
 
+-- Ejercicio: probar que concat es una transformación natural
  mapListId : ∀{X Y : Set} {f : X → Y} (xs ys : List X) → mapList f (xs ++ ys) ≅ mapList f xs ++ mapList f ys
- mapListId {f = f} [] ys = refl
+ mapListId [] _ = refl
  mapListId {f = f} (x ∷ xs) ys = cong (f x ∷_) (mapListId xs ys)
 
  concat-naturality : ∀{X Y : Set}{f : X → Y}(xs : List(List X)) → 
@@ -155,17 +156,16 @@ module Ejemplos where
                                         mapList f xs ++ foldr _++_ [] (mapList (mapList f) xss)
                                         ∎
 
--- Ejercicio: probar que concat es una transformación natural
  concatNat : NatT (ListF ○ ListF) ListF
  concatNat = natural (λ _ → concat) (ext concat-naturality) 
 
- 
+-- Ejercicio: probar que length es una transformación natural
+-- ¿Entre qué funtores es una transformación natural?
  length-naturality : ∀{X Y : Set}{f : X → Y}(x : List X) →
       foldr (λ _ → suc) 0 x ≅ foldr (λ _ → suc) 0 (mapList f x)
  length-naturality [] = refl
- length-naturality (x ∷ xs) = cong suc (length-naturality xs)
--- Ejercicio: probar que length es una transformación natural
--- ¿Entre qué funtores es una transformación natural?
+ length-naturality (_ ∷ xs) = cong suc (length-naturality xs)
+
  lengthNat : NatT ListF (K ℕ)
  lengthNat = natural (λ- length)
                      (ext length-naturality)
@@ -173,7 +173,7 @@ module Ejemplos where
 -- Ejercicio: probar que safehead es una transformación natural
  safeHead : {A : Set} → List A → Maybe A
  safeHead [] = nothing
- safeHead (x ∷ xs) = just x
+ safeHead (x ∷ _) = just x
 
  headNat : NatT ListF MaybeF
  headNat = natural (λ- safeHead)
@@ -196,7 +196,39 @@ record NatIso {a b c d}{C : Cat {a} {b}}{D : Cat {c} {d}}
   Equivalentemente, un isomorfismo natural es un isomorfismo en FunctorCat 
 -}
 
--- isoIso : NatIso → 
+isoIso : {F G : Fun C D}{η : NatT F G} →
+         (NatIso η) → Iso (FunctorCat C D) η
+isoIso {C = C}{D = D}{F = F}{G = G}{η = natural cmpp natt} (natiso cmpIso) =
+       iso (natural (λ X → inv (cmpIso X)) inveq)
+           (NatTEq (ext (λ X → rinv (cmpIso X))))
+           (NatTEq (ext (λ X → linv (cmpIso X))))
+            where open Cat D renaming (Obj to ObjD; Hom to HomD; _∙_ to _∙D_)
+                  open Cat C using () renaming (Obj to ObjC; Hom to HomC)
+                  open Iso
+                  inveq : {X Y : ObjC} {f : HomC X Y} → HMap F f ∙D inv (cmpIso X) ≅ inv (cmpIso Y) ∙D HMap G f
+                  inveq {X} {Y} {f} = proof
+                                      HMap F f ∙D inv (cmpIso X)
+                                      ≅⟨ sym idl ⟩
+                                      iden ∙D (HMap F f ∙D inv (cmpIso X))
+                                      ≅⟨ congl (sym (linv (cmpIso Y))) ⟩
+                                      (inv (cmpIso Y) ∙D cmpp Y) ∙D (HMap F f ∙D inv (cmpIso X))
+                                      ≅⟨ sym ass ⟩
+                                      ((inv (cmpIso Y) ∙D cmpp Y) ∙D HMap F f) ∙D inv (cmpIso X)
+                                      ≅⟨ congl ass ⟩
+                                      (inv (cmpIso Y) ∙D (cmpp Y ∙D HMap F f)) ∙D inv (cmpIso X)
+                                      ≅⟨ congl (congr (sym natt)) ⟩
+                                      (inv (cmpIso Y) ∙D (HMap G f ∙D cmpp X)) ∙D inv (cmpIso X)
+                                      ≅⟨ congl (sym ass) ⟩
+                                      ((inv (cmpIso Y) ∙D HMap G f) ∙D cmpp X) ∙D inv (cmpIso X)
+                                      ≅⟨ ass ⟩
+                                      (inv (cmpIso Y) ∙D HMap G f) ∙D (cmpp X ∙D inv (cmpIso X))
+                                      ≅⟨ congr (rinv (cmpIso X)) ⟩
+                                      (inv (cmpIso Y) ∙D HMap G f) ∙D iden
+                                      ≅⟨ idr ⟩
+                                      inv (cmpIso Y) ∙D HMap G f
+                                      ∎
+-- TIP: Me ayudó arrancar con un where de cmpIso para tener los tipos a mano
+-- Lo tuve qus sacar porque al hacer pattern matching no me coincidia inv (cmpIso Y) con el inv₂ del pattern
 
 --------------------------------------------------
 -- composición con funtor (a izquierda y a derecha)
