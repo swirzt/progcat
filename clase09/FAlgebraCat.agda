@@ -167,12 +167,23 @@ fold {X} f = homo-base (init-homo {falgebra X f})
 
 open import Categories.Iso
 
+prop : iden ∙ α ≅ α ∙ HMap iden
+prop = proof
+       iden ∙ α
+       ≅⟨ idl ⟩
+       α
+       ≅⟨ sym idr ⟩
+       α ∙ iden
+       ≅⟨ congr (sym fid) ⟩
+       α ∙ HMap iden
+       ∎
+
 lemma : comp-homo α-homo init-homo ≅ iden-homo
 lemma = homomorphismEq (proof
          α ∙ homo-base init-homo 
          ≅⟨ sym (cong homo-base (univ {f = comp-homo α-homo init-homo})) ⟩
          homo-base init-homo
-         ≅⟨ cong homo-base univ ⟩
+         ≅⟨ cong homo-base (univ { f = iden-homo }) ⟩
          iden
          ∎)
 
@@ -186,7 +197,7 @@ L = iso init-homo
         ≅⟨ sym fcomp ⟩
         HMap (α ∙ homo-base init-homo)
         ≅⟨ cong HMap (cong homo-base lemma) ⟩
-        HMap (homo-base iden-homo)
+        HMap (homo-base (iden-homo {h = inF}))
         ≅⟨ fid ⟩
         iden
         ∎
@@ -207,5 +218,7 @@ fusion : ∀{A B} → (f : Hom (OMap A) A)
                 → (h : Hom A B) 
                 → (h ∙ f ≅ g ∙ HMap h) 
                 → h ∙ fold f ≅ fold g
-fusion {A} {B} f g h p = {!   !}
-
+fusion {A} {B} f g h p = cong homo-base
+                              (alg-fusion (falgebra A f)
+                                          (falgebra B g)
+                                          (homo h p))
