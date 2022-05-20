@@ -54,4 +54,4 @@ ZeroSet = record {i = λ(); law = ext λ()}
 open import Categories.Terminal
 
 OneSet : Terminal Sets ⊤
-OneSet = record {t = λ _ → _; law = ext (λ _ → refl)}
+OneSet = record {t = λ _ → _; law = ext (λ- refl)}

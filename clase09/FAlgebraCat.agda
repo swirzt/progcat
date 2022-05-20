@@ -158,7 +158,7 @@ fold {X} f = homo-base (init-homo {falgebra X f})
 
 
 {- El algebra inicial es un homomorfismo -}
-α-homo : (F-homomorphism) (mapF inF) inF
+α-homo : F-homomorphism (mapF inF) inF
 α-homo = homo α refl
 
 --------------------------------------------------
