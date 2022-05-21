@@ -126,8 +126,7 @@ module Listas (A : Set) where
 -}
 
   length : μF → ℕ
-  length = fold (λ {(inj₁ x) → zero
-                  ; (inj₂ (_ , y)) → suc y})
+  length = fold [ λ- zero , (λ x → suc (snd x)) ]
 
 --------------------------------------------------
 {- Probar que los las Listas junto con foldr son el
