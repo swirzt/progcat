@@ -58,7 +58,7 @@ module Nat where
   μNat = falgebra ℕ [ λ- zero , suc ]
 
   init-homo-base : (k : F-algebra) → ℕ → carrier k 
-  init-homo-base (falgebra carr alg) = foldℕ (λ x → alg (inj₂ x)) (alg (inj₁ tt))
+  init-homo-base (falgebra carr alg) = foldℕ (alg ∘ inj₂) (alg (inj₁ tt))
 
   lema-init-homo-prop : {X : F-algebra} → (n : OMap ℕ) → (init-homo-base X ∘ algebra μNat) n ≅
                                        (algebra X ∘ HMap (init-homo-base X)) n
@@ -79,7 +79,7 @@ module Nat where
                                           init-homo-base X (suc n)
                                           ≅⟨ refl ⟩ -- Aplicando definición de foldN
                                           algebra X (inj₂ (init-homo-base X n))
-                                          ≅⟨ cong (λ x → algebra X (inj₂ x)) (univℕ {X} {f = homo mor prop} n) ⟩ -- Paso recursivo
+                                          ≅⟨ cong (algebra X ∘ inj₂) (univℕ {X} {f = homo mor prop} n) ⟩ -- Paso recursivo
                                           algebra X (inj₂ (mor n))
                                           ≅⟨ refl ⟩ -- inj₂ (mor n) == HMap mor (inj₂ n)
                                           algebra X (HMap mor (inj₂ n))
@@ -126,7 +126,7 @@ module Listas (A : Set) where
 -}
 
   length : μF → ℕ
-  length = fold [ λ- zero , (λ x → suc (snd x)) ]
+  length = fold [ λ- zero , suc ∘ snd ]
 
 --------------------------------------------------
 {- Probar que los las Listas junto con foldr son el
