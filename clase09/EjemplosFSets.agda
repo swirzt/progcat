@@ -126,7 +126,7 @@ module Listas (A : Set) where
 -}
 
   length : μF → ℕ
-  length x = {!   !}
+  length = {!   !}
 
 --------------------------------------------------
 {- Probar que los las Listas junto con foldr son el
@@ -137,22 +137,46 @@ module Listas (A : Set) where
   foldr n c (Cons x xs) = c x (foldr n c xs)
 
   μList : F-algebra
-  μList = {!   !}
+  μList = falgebra (List A) [ λ- Nil , uncurry Cons ]
 
   init-homo-base : (k : F-algebra) → List A → carrier k 
-  init-homo-base k = {!   !}
+  init-homo-base k = foldr (algebra k (inj₁ tt)) (λ x xs → algebra k (inj₂ (x , xs)))
 
   init-homo-prop : (X : F-algebra) →
        init-homo-base X ∘ algebra μList ≅  algebra X ∘ HMap (init-homo-base X)
-  init-homo-prop X = {!   !}
+  init-homo-prop X = ext (λ {(inj₁ x) → refl
+                           ; (inj₂ y) → refl})
 
   init-homoList : {X : F-algebra} → F-homomorphism μList X
-  init-homoList {X} = {!   !}
+  init-homoList {X} = homo (init-homo-base X) (init-homo-prop X)
 
   univList : ∀{X : F-algebra} → {f : F-homomorphism μList X}
            → (xs : List A) → init-homo-base X xs ≅ homo-base f xs
-  univList = {!   !}
+  univList {X} {f = homo mor prop} Nil = proof
+                                         init-homo-base X Nil
+                                         ≅⟨ refl ⟩ -- def fold
+                                         algebra X (inj₁ tt)
+                                         ≅⟨ refl ⟩ -- HMap mor (inj₁ tt) = inj₁ tt
+                                         algebra X (HMap mor (inj₁ tt))
+                                         ≅⟨ cong (λ x → x (inj₁ tt)) (sym prop) ⟩ -- prop
+                                         mor (algebra μList (inj₁ tt))
+                                         ≅⟨ refl ⟩ -- def algebra μList
+                                         mor Nil                                     
+                                         ∎
+  univList {X} {f = homo mor prop} (Cons x xs) = proof
+                                                 init-homo-base X (Cons x xs)
+                                                 ≅⟨ refl ⟩ -- def fold
+                                                 algebra X (inj₂ (x , init-homo-base X xs))
+                                                 ≅⟨ cong (λ y → algebra X (inj₂ (x , y))) (univList {X} {f = homo mor prop} xs) ⟩ -- recursivo
+                                                 algebra X (inj₂ (x , mor xs))
+                                                 ≅⟨ refl ⟩ -- HMap mor (inj₂ (x , xs)) = inj₂ (x , mor xs)
+                                                 algebra X (HMap mor (inj₂ (x , xs)))
+                                                 ≅⟨ cong (λ y → y (inj₂ (x , xs))) (sym prop) ⟩ -- prop
+                                                 mor (algebra μList (inj₂ (x , xs)))
+                                                 ≅⟨ refl ⟩ -- def algebra μList
+                                                 mor (Cons x xs)
+                                                 ∎
 
   initial-List : Initial (F-AlgebraCat) μList
-  initial-List = {!   !}
+  initial-List = init init-homoList (λ {X} {f} → homomorphismEq (ext (univList {X} {f})))
   
