@@ -42,11 +42,10 @@ module Nat where
 
   -- definir constructores
   0N : μF
-  -- 0N = i _ -- Es lo que pensó gurvich
-  0N = {!   !}
+  0N = α (inj₁ tt)
 
   sucN : μF → μF
-  sucN x = {!   !}
+  sucN x = α (inj₂ x)
 
 --------------------------------------------------
 {- Probar que los naturales, junto con foldℕ son el álgebra inicial de Nat -}
@@ -56,11 +55,10 @@ module Nat where
   foldℕ s z (suc n) = s (foldℕ s z n)
 
   μNat : F-algebra
-  μNat = falgebra ℕ λ {(inj₁ x) → zero
-                     ; (inj₂ y) → suc y}
+  μNat = falgebra ℕ [ λ- zero , suc ]
 
   init-homo-base : (k : F-algebra) → ℕ → carrier k 
-  init-homo-base (falgebra carrier₁ algebra₁) = foldℕ (λ x → algebra₁ (inj₂ x)) (algebra₁ (inj₁ tt))
+  init-homo-base (falgebra carr alg) = foldℕ (λ x → alg (inj₂ x)) (alg (inj₁ tt))
 
   lema-init-homo-prop : {X : F-algebra} → (n : OMap ℕ) → (init-homo-base X ∘ algebra μNat) n ≅
                                        (algebra X ∘ HMap (init-homo-base X)) n
@@ -77,18 +75,29 @@ module Nat where
   univℕ : ∀{X : F-algebra} → {f : F-homomorphism μNat X}
        → (n : ℕ) →  init-homo-base X n ≅ homo-base f n
   univℕ {f = homo mor prop} zero = sym (cong (λ x → x (inj₁ tt)) prop)
-  univℕ {X} {f = homo mor prop} (suc n) = {! univℕ {X = X} {f = homo mor prop} n  !}
-
+  univℕ {X} {f = homo mor prop} (suc n) = proof -- Obviamente fui por las dos puntas, no fui de arriba para abajo :)
+                                          init-homo-base X (suc n)
+                                          ≅⟨ refl ⟩ -- Aplicando definición de foldN
+                                          algebra X (inj₂ (init-homo-base X n))
+                                          ≅⟨ cong (λ x → algebra X (inj₂ x)) (univℕ {X} {f = homo mor prop} n) ⟩ -- Paso recursivo
+                                          algebra X (inj₂ (mor n))
+                                          ≅⟨ refl ⟩ -- inj₂ (mor n) == HMap mor (inj₂ n)
+                                          algebra X (HMap mor (inj₂ n))
+                                          ≅⟨ sym (cong (λ x → x (inj₂ n)) prop) ⟩ -- Usando propiedad
+                                          mor (algebra μNat (inj₂ n))
+                                          ≅⟨ refl ⟩ -- Definición del algebra de μNat
+                                          mor (suc n)
+                                          ∎
 
   initial-ℕ : Initial F-AlgebraCat μNat
-  initial-ℕ = init {!   !} {!   !}
+  initial-ℕ = init init-homoℕ (λ {X} {f} → homomorphismEq (ext (univℕ {X} {f})))
 
 --------------------------------------------------
 {- Definir un functor cuya algebra inicial sea las listas.
 -}
-
+-- List a = Nil | Cons a (List a)
 L : (A : Set) → Fun (Sets {lzero}) (Sets {lzero})
-L A = {!   !}
+L A = K ⊤ +F (K A ×F IdF)
 
 module Listas (A : Set) where
 
@@ -107,17 +116,17 @@ module Listas (A : Set) where
    efectivamente son listas (como hicimos con los naturales)
 -}
   nil : μF
-  nil = {!   !}
+  nil = α (inj₁ tt)
 
   cons : A → μF → μF
-  cons x xs = {!   !}
+  cons x xs = α (inj₂ (x , xs))
 
 {-
   Definir la función length para listas
 -}
 
   length : μF → ℕ
-  length = {!   !}
+  length x = {!   !}
 
 --------------------------------------------------
 {- Probar que los las Listas junto con foldr son el
