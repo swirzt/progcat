@@ -68,7 +68,8 @@ open import Data.List hiding (map ; sum)
 
 -- No podemos definirlo, falta modelar recursión
 -- toList' : ∀ {r} {A} → ⟦ U ⊕ (P ⊗ I) ⟧ᵣ A r → List A 
--- toList' x = {!!} 
+-- toList' (inj₁ x) = []
+-- toList' (inj₂ (x , xs)) = x ∷ {!   !} 
 
 
 
@@ -81,7 +82,7 @@ data μ (F : Regular) (p : Set) : Set where
 
 -- Functor que captura la signatura de listas
 ListF : Regular
-ListF = U ⊕ ( P ⊗ I)
+ListF = U ⊕ (P ⊗ I)
 
 -- Listas representadas como el punto fijo de su signatura
 LIST : Set → Set
@@ -121,7 +122,7 @@ iso1 {_} {x ∷ xs} = cong (x ∷_) iso1
 
 iso2 : ∀ {A}{x} → fromList {A} (toList {A} x) ≡ x
 iso2 {_} {⟨ inj₁ x ⟩} = refl
-iso2 {_} {⟨ inj₂ y ⟩} = cong (λ x → ⟨ inj₂ ((proj₁ y) , x) ⟩) iso2 
+iso2 {_} {⟨ inj₂ y ⟩} = cong (λ x → ⟨ inj₂ (proj₁ y , x) ⟩) iso2 
 
 listIso : ∀ {A : Set} → Iso (LIST A) (List A) (toList {A})
 listIso = iso fromList iso1 iso2 
@@ -198,7 +199,7 @@ foldL {A} n c xs = fold ([_,_] (λ _ → n) c) (fromList xs)
 
 -- Ejemplos
 n : ℕ
-n = foldL 0 (λ { (x , y) → x + y}) (1 ∷ 2 ∷ [])
+n = foldL 0 (uncurry _+_) (1 ∷ 2 ∷ [])
 
 
 -- Ejercicio 1) Completar las siguientes definiciones
@@ -224,7 +225,7 @@ fromTree leaf = ⟨ inj₁ tt ⟩
 fromTree (node l x r) = ⟨ inj₂ (fromTree l , x , fromTree r) ⟩ 
 
 -- Definir foldT en términos de foldT
-foldT : ∀ {A B} → B → (B × (A × B) → B) → Tree A → B
+foldT : ∀ {a} {A B : Set a} → B → (B × (A × B) → B) → Tree A → B
 foldT l n leaf = l
 foldT l n (node t x t₁) = n (foldT l n t , x , foldT l n t₁) 
 
@@ -239,9 +240,9 @@ id x = x
 depth : ∀ {F : Regular} {A : Set} → μ F A → ℕ
 depth {F} {A} = fold {F} (alg {F}) 
    where alg : ∀ {F'} → Algebra F' A ℕ
-         alg {U} x = 0
-         alg {K A} x = 0
-         alg {P} x = 0
+         alg {U} x = 1
+         alg {K A} x = 1
+         alg {P} x = 1
          alg {F' ⊗ F''} (x , y) = alg {F'} x ⊔ alg {F''} y
          alg {F' ⊕ F''} (inj₁ x) = alg {F'} x
          alg {F' ⊕ F''} (inj₂ y) = alg {F''} y
@@ -252,6 +253,11 @@ depth {F} {A} = fold {F} (alg {F})
 height : ∀ {A} → Tree A → ℕ
 height t = pred (depth (fromTree t))  
 
+test : ℕ
+test = height (node (leaf) (1 ∷ 2 ∷ 3 ∷ []) (leaf))
+
+test2 : ℕ
+test2 = elements (fromTree (node (node (leaf) (1 ∷ 2 ∷ 3 ∷ []) (leaf)) (1 ∷ 2 ∷ 3 ∷ []) (leaf)))
 
 -- Ejercicio 3)
 -- Definir una función sum genérica que sume los números naturales almacenados
@@ -261,10 +267,10 @@ sum : ∀ {F : Regular} → μ F ℕ  → ℕ
 sum {U} ⟨ x ⟩ = 0
 sum {K A} ⟨ x ⟩ = 0
 sum {P} ⟨ x ⟩ = x
-sum {F ⊗ F'} ⟨ x , y ⟩ = sum ⟨ x ⟩ + sum ⟨ y ⟩ 
-sum {F ⊕ F'} ⟨ inj₁ x ⟩ = sum ⟨ x ⟩
-sum {F ⊕ F'} ⟨ inj₂ y ⟩ = sum ⟨ y ⟩
-sum {I} x = {!   !}  
+sum {F ⊗ F'} ⟨ x , y ⟩ = {!   !}
+sum {F ⊕ F'} ⟨ inj₁ x ⟩ = {!   !}
+sum {F ⊕ F'} ⟨ inj₂ y ⟩ = {!   !}
+sum {I} ⟨ x ⟩ = sum x
 
 
 
