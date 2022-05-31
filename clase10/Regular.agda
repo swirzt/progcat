@@ -67,8 +67,8 @@ open import Data.List hiding (map ; sum)
 -- List = 1 + P × I
 
 -- No podemos definirlo, falta modelar recursión
-toList' : ∀ {r} {A} → ⟦ U ⊕ (P ⊗ I) ⟧ᵣ A r → List A 
-toList' x = {!!} 
+-- toList' : ∀ {r} {A} → ⟦ U ⊕ (P ⊗ I) ⟧ᵣ A r → List A 
+-- toList' x = {!!} 
 
 
 
@@ -116,10 +116,12 @@ open Iso
 
 -- Completar
 iso1 : ∀ {A}{x} → toList {A} (fromList {A} x) ≡ x
-iso1 {_} {x} = {!!}  
+iso1 {_} {[]} = refl
+iso1 {_} {x ∷ xs} = cong (x ∷_) iso1  
 
 iso2 : ∀ {A}{x} → fromList {A} (toList {A} x) ≡ x
-iso2 {_} {x} = {!!} 
+iso2 {_} {⟨ inj₁ x ⟩} = refl
+iso2 {_} {⟨ inj₂ y ⟩} = cong (λ x → ⟨ inj₂ ((proj₁ y) , x) ⟩) iso2 
 
 listIso : ∀ {A : Set} → Iso (LIST A) (List A) (toList {A})
 listIso = iso fromList iso1 iso2 
@@ -201,11 +203,11 @@ n = foldL 0 (λ { (x , y) → x + y}) (1 ∷ 2 ∷ [])
 
 -- Ejercicio 1) Completar las siguientes definiciones
 
-open import Data.Tree.Binary 
+open import Data.Tree.Binary hiding (map)
 
 -- Functor que captura la estructura de los árboles binarios
 TreeF : Regular
-TreeF = {!!} 
+TreeF = U ⊕ (I ⊗ (P ⊗ I)) 
 
 -- Árboles representados como el punto fijo de su signatura
 
@@ -214,23 +216,36 @@ TREE A = μ TreeF A
 
 -- Isomorfismo entre Tree A y TREE A
 toTree : ∀ {A} → TREE A → Tree A
-toTree x = {!!}
+toTree ⟨ inj₁ tt ⟩ = leaf
+toTree ⟨ inj₂ (l , x , r) ⟩ = node (toTree l) x (toTree r)
 
 fromTree : ∀ {A} → Tree A → TREE A 
-fromTree x = {!!} 
+fromTree leaf = ⟨ inj₁ tt ⟩
+fromTree (node l x r) = ⟨ inj₂ (fromTree l , x , fromTree r) ⟩ 
 
 -- Definir foldT en términos de foldT
 foldT : ∀ {A B} → B → (B × (A × B) → B) → Tree A → B
-foldT l n t = {!!} 
+foldT l n leaf = l
+foldT l n (node t x t₁) = n (foldT l n t , x , foldT l n t₁) 
 
 
 -- Ejercicio 2) Definir una función genérica depth, que calcule la profundidad de un
 -- dato dado, es decir la cantidad de llamadas recursivas.
 
+
+id : ∀ {A : Set} → A → A
+id x = x
+
 depth : ∀ {F : Regular} {A : Set} → μ F A → ℕ
 depth {F} {A} = fold {F} (alg {F}) 
    where alg : ∀ {F'} → Algebra F' A ℕ
-         alg {F'}  x = {!!} 
+         alg {U} x = 0
+         alg {K A} x = 0
+         alg {P} x = 0
+         alg {F' ⊗ F''} (x , y) = alg {F'} x ⊔ alg {F''} y
+         alg {F' ⊕ F''} (inj₁ x) = alg {F'} x
+         alg {F' ⊕ F''} (inj₂ y) = alg {F''} y
+         alg {I} x = suc x 
 
 
 -- función que calcula la altura de un árbol
@@ -243,7 +258,13 @@ height t = pred (depth (fromTree t))
 -- en una estructura de naturales. 
 
 sum : ∀ {F : Regular} → μ F ℕ  → ℕ
-sum {F} = {!!}  
+sum {U} ⟨ x ⟩ = 0
+sum {K A} ⟨ x ⟩ = 0
+sum {P} ⟨ x ⟩ = x
+sum {F ⊗ F'} ⟨ x , y ⟩ = sum ⟨ x ⟩ + sum ⟨ y ⟩ 
+sum {F ⊕ F'} ⟨ inj₁ x ⟩ = sum ⟨ x ⟩
+sum {F ⊕ F'} ⟨ inj₂ y ⟩ = sum ⟨ y ⟩
+sum {I} x = {!   !}  
 
 
 
