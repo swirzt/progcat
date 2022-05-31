@@ -88,7 +88,13 @@ mapB (F ⊚ G) f g ⟨ x ⟩ = ⟨ mapB F (mapB G f g) (mapB (F ⊚ G) f g) x �
 
 {-# TERMINATING #-}
 pmap : {A B : Set } (F : Signa) → (A → B) → μ' F A → μ' F B
-pmap F f ⟨ x ⟩ = ⟨ ? ⟩
+pmap U f ⟨ x ⟩ = ⟨ tt ⟩
+pmap P f ⟨ x ⟩ = ⟨ f x ⟩
+pmap I f ⟨ x ⟩ = ⟨ pmap I f x ⟩
+pmap (F ⊗ F₁) f ⟨ x , y ⟩ = ⟨ mapB F f (pmap (F ⊗ F₁) f) x , mapB F₁ f (pmap (F ⊗ F₁) f) y ⟩ 
+pmap (F ⊕ F₁) f ⟨ inj₁ x ⟩ = ⟨ inj₁ (mapB F f (pmap (F ⊕ F₁) f) x) ⟩
+pmap (F ⊕ F₁) f ⟨ inj₂ y ⟩ = ⟨ inj₂ (mapB F₁ f (pmap (F ⊕ F₁) f) y) ⟩ 
+pmap (F ⊚ F₁) f ⟨ ⟨ x ⟩ ⟩ = ⟨ ⟨ mapB F (mapB F₁ f (pmap (F ⊚ F₁) f)) (pmap F (mapB F₁ f (pmap (F ⊚ F₁) f))) x ⟩ ⟩ 
 
 
 
