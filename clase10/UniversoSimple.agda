@@ -38,7 +38,16 @@ data SU : Set where
 -- Programación genérica : El objetivo es definir una función para una clase de tipos 
 
 _==_ : {A : SU} → ⟦ A ⟧ₛ → ⟦ A ⟧ₛ → Bool
-_==_ {A} x y = {!!} 
+_==_ {unit} tt tt = true
+_==_ {nat} zero zero = true
+_==_ {nat} zero (suc y) = false
+_==_ {nat} (suc x) zero = false
+_==_ {nat} (suc x) (suc y) = x == y
+_==_ {sum A A₁} (inj₁ x) (inj₁ y) = x == y
+_==_ {sum A A₁} (inj₁ x) (inj₂ y) = false
+_==_ {sum A A₁} (inj₂ x) (inj₁ y) = false
+_==_ {sum A A₁} (inj₂ x) (inj₂ y) = x == y
+_==_ {prod A A₁} (x , y) (x₁ , y₁) = x == x₁ ∧ y == y₁
 
 
 
