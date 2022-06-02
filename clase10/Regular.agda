@@ -267,13 +267,13 @@ sum : ∀ {F : Regular} → μ F ℕ  → ℕ
 sum {U} ⟨ x ⟩ = 0
 sum {K A} ⟨ x ⟩ = 0
 sum {P} ⟨ x ⟩ = x
-sum {F ⊗ F'} ⟨ x , y ⟩ = {!   !}
-sum {F ⊕ F'} ⟨ inj₁ x ⟩ = {!   !}
-sum {F ⊕ F'} ⟨ inj₂ y ⟩ = {!   !}
+sum {F ⊗ F'} ⟨ x , y ⟩ = sum {F} ⟨ mapFold F (F ⊗ F') (λ {(fst , snd) → ⟨ fst ⟩}) x ⟩ + sum {F'} ⟨ mapFold F' (F ⊗ F') ((λ {(fst , snd) → ⟨ snd ⟩})) y ⟩
+sum {F ⊕ F'} ⟨ inj₁ x ⟩ = sum {F} ⟨ mapFold F (F ⊕ F') (λ {(inj₁ x) → ⟨ x ⟩
+                                                         ; (inj₂ y) → {!   !}}) x ⟩
+sum {F ⊕ F'} ⟨ inj₂ y ⟩ = sum {F'} ⟨ (mapFold F' (F ⊕ F') (λ {(inj₁ x) → {!   !}
+                                                            ; (inj₂ y) → ⟨ y ⟩}) y) ⟩
 sum {I} ⟨ x ⟩ = sum x
 
 
-
-
-
-
+test3 : ℕ
+test3 = sum (fromList (1 ∷ 2 ∷ 3 ∷ []))
