@@ -254,26 +254,29 @@ height : ∀ {A} → Tree A → ℕ
 height t = pred (depth (fromTree t))  
 
 test : ℕ
-test = height (node (leaf) (1 ∷ 2 ∷ 3 ∷ []) (leaf))
+test = height (node leaf (1 ∷ 2 ∷ 3 ∷ []) leaf)
 
 test2 : ℕ
-test2 = elements (fromTree (node (node (leaf) (1 ∷ 2 ∷ 3 ∷ []) (leaf)) (1 ∷ 2 ∷ 3 ∷ []) (leaf)))
+test2 = elements (fromTree (node (node leaf (1 ∷ 2 ∷ 3 ∷ []) leaf) (1 ∷ 2 ∷ 3 ∷ []) leaf))
 
 -- Ejercicio 3)
 -- Definir una función sum genérica que sume los números naturales almacenados
 -- en una estructura de naturales. 
 
 sum : ∀ {F : Regular} → μ F ℕ  → ℕ
-sum {U} ⟨ x ⟩ = 0
-sum {K A} ⟨ x ⟩ = 0
-sum {P} ⟨ x ⟩ = x
-sum {F ⊗ F'} ⟨ x , y ⟩ = sum {F} ⟨ mapFold F (F ⊗ F') (λ {(fst , snd) → ⟨ fst ⟩}) x ⟩ + sum {F'} ⟨ mapFold F' (F ⊗ F') ((λ {(fst , snd) → ⟨ snd ⟩})) y ⟩
-sum {F ⊕ F'} ⟨ inj₁ x ⟩ = sum {F} ⟨ mapFold F (F ⊕ F') (λ {(inj₁ x) → ⟨ x ⟩
-                                                         ; (inj₂ y) → {!   !}}) x ⟩
-sum {F ⊕ F'} ⟨ inj₂ y ⟩ = sum {F'} ⟨ (mapFold F' (F ⊕ F') (λ {(inj₁ x) → {!   !}
-                                                            ; (inj₂ y) → ⟨ y ⟩}) y) ⟩
-sum {I} ⟨ x ⟩ = sum x
+sum {F} = fold {F} (alg {F})
+          where alg : ∀ {F' : Regular} → Algebra F' ℕ ℕ
+                alg {U} x = 0
+                alg {K A} x = 0
+                alg {P} x = x
+                alg {F' ⊗ F''} (x , y) = alg {F'} x + alg {F''} y
+                alg {F' ⊕ F''} (inj₁ x) = alg {F'} x
+                alg {F' ⊕ F''} (inj₂ y) = alg {F''} y
+                alg {I} x = x
 
 
 test3 : ℕ
 test3 = sum (fromList (1 ∷ 2 ∷ 3 ∷ []))
+
+test4 : ℕ
+test4 = sum (fromTree (node (node (leaf) 1 (leaf)) 2 (node (leaf) 3 (leaf))))
