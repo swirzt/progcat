@@ -29,24 +29,66 @@ record CCC : Set (a ⊔ b) where
 
   {- Ejercicio: completar la definición -}
   map⇒ : ∀{X Y Z} → Hom X Z → Hom (Y ⇒ X) (Y ⇒ Z)
-  map⇒ f = {!   !}
+  map⇒ f = curry (f ∙ apply)
 
 module Properties (isCCC : CCC) where
   open CCC isCCC
   open import Categories.Products.Properties hasProducts 
-         using (comp-pair ; iden-pair ; iden-comp-pair)
+         using (comp-pair ; iden-pair )
   
  
   {- Ejercicio: map⇒ preserva identidades. -}
   map⇒iden : ∀{X Y} → map⇒ {X} {Y} {X} (iden {X}) ≅ iden {Y ⇒ X}
-  map⇒iden = {!   !}
+  map⇒iden = proof
+             map⇒ iden
+             ≅⟨ refl ⟩
+             curry (iden ∙ apply)
+             ≅⟨ cong curry idl ⟩
+             curry apply
+             ≅⟨ cong curry refl ⟩
+             curry (uncurry iden)
+             ≅⟨ lawcurry2 ⟩
+             iden
+             ∎
 
   {- Ejercicio: Propiedad de curry con map⇒. Caso particular de nat-curry, con f = iden. -}
   curry-prop : ∀{X Y Z Z'}{f : Hom (X × Y) Z}{g : Hom Z Z'}
               →  map⇒ g ∙ curry f ≅ curry (g ∙ f)
-  curry-prop {f = f} {g} = {!   !}
+  curry-prop {f = f} {g} = proof
+                           map⇒ g ∙ curry f
+                           ≅⟨ refl ⟩
+                           curry (g ∙ apply) ∙ curry f
+                           ≅⟨ refl ⟩
+                           curry (g ∙ uncurry iden) ∙ curry f
+                           ≅⟨ sym idr ⟩
+                           (curry (g ∙ uncurry iden) ∙ curry f) ∙ iden
+                           ≅⟨ ass ⟩
+                           curry (g ∙ uncurry iden) ∙ curry f ∙ iden
+                           ≅⟨ nat-curry ⟩
+                           curry (g ∙ f ∙ pair iden iden)
+                           ≅⟨ cong curry (congr (congr iden-pair)) ⟩
+                           curry (g ∙ f ∙ iden)
+                           ≅⟨ cong curry (congr idr) ⟩
+                           curry (g ∙ f)
+                           ∎
 
   {- Ejercicio: probar que para todo objeto B,  B⇒_ define un endofunctor -}
+  open import Functors
+  nat-endo : {B : Obj} → Fun C C
+  nat-endo {B} = functor (B ⇒_) map⇒ map⇒iden lemma
+          where lemma : {X Y Z : Obj} {f : Hom Y Z} {g : Hom X Y} →
+                        map⇒ (f ∙ g) ≅ map⇒ f ∙ map⇒ g
+                lemma {f = f} {g = g} = proof
+                                        map⇒ (f ∙ g)
+                                        ≅⟨ refl ⟩
+                                        curry ((f ∙ g) ∙ apply)
+                                        ≅⟨ cong curry ass ⟩
+                                        curry (f ∙ g ∙ apply)
+                                        ≅⟨ sym curry-prop ⟩
+                                        map⇒ f ∙ curry (g ∙ apply)
+                                        ≅⟨ refl ⟩
+                                        map⇒ f ∙ map⇒ g
+                                        ∎ 
 
   {- Una definición alternativa de exponencial se puede dar en base al morfismo apply:
     Un exponencial entre A y B es un objeto B ⇒ A, y un morfismo apply : (B ⇒ A) × B → A tal que
