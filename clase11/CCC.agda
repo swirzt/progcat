@@ -98,6 +98,28 @@ module Properties (isCCC : CCC) where
     Ejercicio: probar que nuestra definición implica la de más arriba. 
   -}
   curry-exp : ∀{X Y Z} {f : Hom (X × Y) Z} →  apply ∙ pair (curry f) iden ≅ f
-  curry-exp {f = f} = {!   !}
+  curry-exp {X} {Y} {Z} {f = f} = proof
+                      apply ∙ pair (curry f) iden
+                      ≅⟨ refl ⟩
+                      uncurry iden ∙ pair (curry f) iden -- Tiene pinta de nat-curry falta multiplicar algo
+                      ≅⟨ sym idl ⟩
+                      iden ∙ uncurry iden ∙ pair (curry f) iden
+                      ≅⟨ sym lawcurry1 ⟩ -- Agrego el curry para poder usar nat-curry
+                      uncurry (curry (iden ∙ uncurry iden ∙ pair (curry f) iden))
+                      ≅⟨ cong uncurry (sym nat-curry) ⟩ -- Paso mágico
+                      uncurry (curry (iden ∙ uncurry iden) ∙ curry (uncurry iden) ∙ curry f)
+                      ≅⟨ cong uncurry (congl (cong curry idl)) ⟩ -- Comienza la limpieza de iden's
+                      uncurry (curry (uncurry iden) ∙ curry (uncurry iden) ∙ curry f)
+                      ≅⟨ cong uncurry (congl lawcurry2) ⟩
+                      uncurry (iden ∙ curry (uncurry iden) ∙ curry f)
+                      ≅⟨ cong uncurry idl ⟩
+                      uncurry (curry (uncurry iden) ∙ curry f)
+                      ≅⟨ cong uncurry (congl lawcurry2) ⟩
+                      uncurry (iden ∙ curry f)
+                      ≅⟨ cong uncurry idl ⟩
+                      uncurry (curry f)
+                      ≅⟨ lawcurry1 ⟩
+                      f
+                      ∎
 
   
