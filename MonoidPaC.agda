@@ -60,7 +60,6 @@ CatMon = record
             ; idr = mon-hom-eq refl
             ; ass = mon-hom-eq refl
             }
-open Cat CatMon
 
 open import Categories.Products CatMon
 
@@ -89,24 +88,25 @@ CatMonProd = prod MonProd
                   λ {f = f} {g = g} eq1 eq2 → mon-hom-eq (cong₂ (λ f g x → morph f x , morph g x) eq1 eq2)
 
 
-open import Categories.Coproducts CatMon
+-- open import Categories.Coproducts CatMon
 
 open import Data.Sum using (_⊎_) renaming (inj₁ to Inl ; inj₂ to Inr)
-{- 
-MonCoprod : (M N : Monoid) → Monoid
-MonCoprod (mon Carrier₁ _∙_ ε₁ lid₁ rid₁ assoc₁) (mon Carrier₂ _∙_₁ ε₂ lid₂ rid₂ assoc₂) =
-          mon (Carrier₁ ⊎ Carrier₂)
-              comp
-              {!   !}
-              {!   !}
-              {!   !}
-              {!   !}
-                where comp : Carrier₁ ⊎ Carrier₂ → Carrier₁ ⊎ Carrier₂ → Carrier₁ ⊎ Carrier₂
-                      comp (Inl x) (Inl y) = Inl (x ∙ y)
-                      comp (Inl x) (Inr y) = {!   !}
-                      comp (Inr x) (Inl y) = {!   !}
-                      comp (Inr x) (Inr y) = Inr (x ∙ y ₁)
--}
+
+-- MonCoprod : (M N : Monoid) → Monoid
+-- MonCoprod (mon Carrier₁ _∙_ ε₁ lid₁ rid₁ assoc₁) (mon Carrier₂ _∙_₁ ε₂ lid₂ rid₂ assoc₂) =
+--           mon (Carrier₁ ⊎ Carrier₂)
+--               comp
+--               {!   !}
+--               {!   !}
+--               {!   !}
+--               {!   !}
+--                 where comp : Carrier₁ ⊎ Carrier₂ → Carrier₁ ⊎ Carrier₂ → Carrier₁ ⊎ Carrier₂
+--                       comp (Inl x) (Inl y) = Inl (x ∙ y)
+--                       comp (Inl x) (Inr y) = {!   !}
+--                       comp (Inr x) (Inl y) = {!   !}
+--                       comp (Inr x) (Inr y) = Inr (x ∙ y ₁)
+
+
 open import Data.List
 
 ++eq : ∀{X : Set} → {xs : List X} → xs ++ [] ≅ xs
@@ -116,70 +116,244 @@ open import Data.List
 ++assoc : ∀{X : Set} → {xs ys zs : List X} → (xs ++ ys) ++ zs ≅ xs ++ (ys ++ zs)
 ++assoc {X} {[]} {ys} {zs} = refl
 ++assoc {X} {x ∷ xs} {ys} {zs} = cong (x ∷_) (++assoc {xs = xs})
+ 
+open import Relation.Nullary using (Dec ; yes ; no) renaming (¬_ to neg)
 
-reduce : {M N : Monoid} → List (Carrier M ⊎ Carrier N) → List (Carrier M ⊎ Carrier N)
-reduce {M} {N} = foldr func []
-        where open Monoid M renaming (Carrier to CM; ε to εM ;  _∙_ to _∙M_)
-              open Monoid N renaming (Carrier to CN; ε to εN ;  _∙_ to _∙N_)
-              func : Carrier M ⊎ Carrier N → List (Carrier M ⊎ Carrier N) → List (Carrier M ⊎ Carrier N)
-              func (Inl x) (Inl y ∷ xs) = Inl (x ∙M y) ∷ xs
-              func (Inl εM) xs = xs
-              func (Inr x) (Inr y ∷ xs) = Inr (x ∙N y) ∷ xs
-              func (Inr εN) xs = xs
-              func x xs = x ∷ xs
+esNeutro : {M : Monoid} → (x : Carrier M) → Dec (x ≅ ε M)
+esNeutro = {!   !}
+
+reduce : {M N : Monoid} → List (Σ (Carrier M) (λ x → Dec (x ≅ ε M)) ⊎ Σ (Carrier N) (λ x → Dec (x ≅ ε N))) → List (Σ (Carrier M) (λ x → Dec (x ≅ ε M)) ⊎ Σ (Carrier N) (λ x → Dec (x ≅ ε N)))
+reduce {M} {N} [] = []
+reduce {M} {N} (Inl (x , eq) ∷ xs) with eq
+... | yes p = reduce {M} {N} xs
+... | no np with reduce {M} {N} xs
+...         | [] = Inl (x , eq) ∷ []
+...         | Inr y ∷ ys = Inl (x , eq) ∷ Inr y ∷ ys
+...         | Inl (y , eqy) ∷ ys with esNeutro {M} (_∙_ M x y)
+...                               | yes pn = ys
+...                               | no npn = Inl ((_∙_ M x y) , no npn) ∷ ys
+reduce {M} {N} (Inr (x , eq) ∷ xs) with eq
+... | yes p = reduce {M} {N} xs
+... | no np with reduce {M} {N} xs
+...         | [] = Inr (x , eq) ∷ []
+...         | Inl y ∷ ys = Inr (x , eq) ∷ Inl y ∷ ys
+...         | Inr (y , eqy) ∷ ys with esNeutro {N} (_∙_ N x y)
+...                               | yes pn = ys
+...                               | no npn = Inr ((_∙_ N x y) , no npn) ∷ ys
+
 
 record Eithers (M N : Monoid) : Set where
     constructor eith
-    field toList : List (Carrier M ⊎ Carrier N)
-          cond : reduce {M} {N} toList ≅ toList
+    field toList : List (Σ (Carrier M) (λ x → Dec (x ≅ ε M)) ⊎ Σ (Carrier N) (λ x → Dec (x ≅ ε N)))
+          -- cond : reduce {M} {N} toList ≅ toList
 open Eithers
 
-eith-prod : {M N : Monoid} → (x y : Eithers M N) → Eithers M N
-eith-prod {M} {N} (eith toList cond) (eith toList₁ cond₁) =
-           eith (reduce {M} {N} (toList ++ toList₁)) (demapp cond cond₁)
-            where demapp : ∀{xs} → ∀{ys} → reduce {M} {N} xs ≅ xs → reduce {M} {N} ys ≅ ys → reduce {M} {N} (reduce {M} {N} (xs ++ ys)) ≅ reduce (xs ++ ys)
-                  demapp eqx eqy = {!   !}
+-- eith-prod : {M N : Monoid} → (x y : Eithers M N) → Eithers M N
+-- eith-prod {M} {N} (eith toList₁ cond₁) (eith toList₂ cond₂) =
+--            eith (reduce {M} {N} (toList₁ ++ toList₂)) (demapp cond₁ cond₂)
+--             where demapp : ∀{xs} → ∀{ys} → reduce {M} {N} xs ≅ xs → reduce {M} {N} ys ≅ ys → reduce {M} {N} (reduce {M} {N} (xs ++ ys)) ≅ reduce (xs ++ ys)
+--                   demapp eqx eqy = {!   !}
 
-eith-eq : {M N : Monoid} {x y : Eithers M N} → toList x ≅ toList y → x ≅ y
-eith-eq {M} {N} {eith toList₁ cond₁} {eith .toList₁ cond₂} refl = cong (eith toList₁) (ir cond₁ cond₂)
+-- eith-eq : {M N : Monoid} {x y : Eithers M N} → toList x ≅ toList y → x ≅ y
+-- eith-eq {M} {N} {eith toList₁ cond₁} {eith .toList₁ cond₂} refl = cong (eith toList₁) (ir cond₁ cond₂)
 
--- ∣_∣ : Set → Monoid
--- ∣ M ∣ = mon (List M) _++_ [] refl ++eq (λ {x} → ++assoc {xs = x})
+-- EithersMon : (M N : Monoid) → Monoid
+-- EithersMon M N = mon (Eithers M N)
+--                      eith-prod
+--                      (eith [] refl)
+--                      ?
+--                      ?
+--                      ?
 
-EithersMon : (M N : Monoid) → Monoid
-EithersMon M N = mon (Eithers M N)
-                     eith-prod
-                     (eith [] refl)
-                     (λ {x} → eith-eq (cond x))
-                     (λ {x} → eith-eq (trans (cong (reduce {M} {N})  ++eq) (cond x)))
-                     λ {x} {y} {z} → eith-eq (proof
-                                              reduce ((reduce (toList x ++ toList y)) ++ toList z)
-                                              ≅⟨ cong (λ x₁ → reduce ({! x₁  !} ++ {!   !})) (cond (eith-prod x y)) ⟩
-                                              reduce ((toList x ++ toList y) ++ toList z)
-                                              ≅⟨ {!   !} ⟩
-                                              {!   !}
-                                              ≅⟨ {!   !} ⟩
-                                              {!   !}
-                                              ≅⟨ {!   !} ⟩
-                                              {!   !}
-                                              ≅⟨ {!   !} ⟩
-                                              reduce ( toList x ++ (reduce (toList y ++ toList z)) )
-                                              ∎)
+-- EitherCoprod : Coproducts
 
 
-MonCoprod : Coproducts
-MonCoprod = coproduct
-            {!   !}
-            {!   !}
-            {!   !}
-            {!   !}
-            {!   !}
-            {!   !}
-            {!   !}
+
+-- MonCoprod : Coproducts
+-- MonCoprod = coproduct
+--             MonProd
+--             inj1
+--             inj2
+--             [_,_]
+--             (λ {A} {B} {C} {f} {g} → law1 {A} {B} {C} {f} {g})
+--             (λ {A} {B} {C} {f} {g} → law2 {A} {B} {C} {f} {g})
+--             law3
+--                where inj1 : {A B : Monoid} → mon-hom A (MonProd A B)
+--                      inj1 {A} {B} = let open Monoid A renaming (Carrier to CA; ε to εA ;  _∙_ to _∙A_)
+--                                         open Monoid B renaming (Carrier to CB; ε to εB ;  _∙_ to _∙B_ ; lid to lidB)
+--                                     in monhom (_, εB) refl (cong ((_ ∙A _) ,_) (sym lidB))
+--                      inj2 : {A B : Monoid} → mon-hom B (MonProd A B)
+--                      inj2 {A} {B} = let open Monoid A renaming (Carrier to CA; ε to εA ;  _∙_ to _∙A_ ; lid to lidA)
+--                                         open Monoid B renaming (Carrier to CB; ε to εB ;  _∙_ to _∙B_)
+--                                     in monhom (εA ,_) refl (cong (_, (_ ∙B _)) (sym lidA))
+--                      [_,_] : {A B C : Monoid} → mon-hom A C → mon-hom B C → mon-hom (MonProd A B) C
+--                      [_,_] {A} {B} {C} f g = let open Monoid A renaming (Carrier to CA; ε to εA ;  _∙_ to _∙A_ ; lid to lidA)
+--                                                  open Monoid B renaming (Carrier to CB; ε to εB ;  _∙_ to _∙B_ ; lid to lidB)
+--                                                  open Monoid C renaming (Carrier to CC; ε to εC ;  _∙_ to _∙C_ ; lid to lidC)
+--                                              in monhom (λ {(a , b) → morph f a ∙C morph g b}) (proof
+--                                                                                                morph f εA ∙C morph g εB
+--                                                                                                ≅⟨ cong₂ _∙C_ (preserves-unit f) (preserves-unit g) ⟩
+--                                                                                                εC ∙C εC
+--                                                                                                ≅⟨ lidC ⟩
+--                                                                                                εC
+--                                                                                                ∎)
+--                                                                                               (λ {x} {y} → proof
+--                                                                                                morph f (fst x ∙A fst y) ∙C morph g (snd x ∙B snd y)
+--                                                                                                ≅⟨ cong₂ _∙C_ (preserves-mult f) (preserves-mult g) ⟩
+--                                                                                                (morph f (fst x) ∙C morph f (fst y)) ∙C (morph g (snd x) ∙C morph g (snd y))
+--                                                                                                ≅⟨ {!   !} ⟩
+--                                                                                                {!   !}
+--                                                                                                ≅⟨ {!   !} ⟩
+--                                                                                                {!   !}
+--                                                                                                ≅⟨ {!   !} ⟩
+--                                                                                                {!   !}
+--                                                                                                ≅⟨ {!   !} ⟩
+--                                                                                                (morph f (fst x) ∙C morph g (snd x)) ∙C (morph f (fst y) ∙C morph g (snd y))
+--                                                                                                ∎)
+--                      law1 : {A B C : Monoid} → {f : mon-hom  A C} {g : mon-hom B C} → mon-hom-op [ f , g ] inj1 ≅ f
+--                      law1 {A} {B} {C} {f} {g} = let open Monoid C using () renaming (_∙_ to _∙C_) 
+--                                                     open Monoid B using () renaming (ε to nB) in
+--                                                 mon-hom-eq (ext (λ x → proof
+--                                                                        morph (mon-hom-op [ f , g ] inj1) x
+--                                                                        ≅⟨ refl ⟩
+--                                                                        morph f x ∙C morph g nB
+--                                                                        ≅⟨ cong (morph f x ∙C_) (preserves-unit g) ⟩
+--                                                                        morph f x ∙C ε C
+--                                                                        ≅⟨ rid C ⟩
+--                                                                        morph f x
+--                                                                        ∎))
+--                      law2 : {A B C : Monoid} → {f : mon-hom  A C} {g : mon-hom B C} → mon-hom-op [ f , g ] inj2 ≅ g
+--                      law2 {A} {B} {C} {f} {g} = let open Monoid C using () renaming (_∙_ to _∙C_) 
+--                                                     open Monoid A using () renaming (ε to nA) in
+--                                                 mon-hom-eq (ext (λ x → proof
+--                                                                        morph (mon-hom-op [ f , g ] inj2) x
+--                                                                        ≅⟨ refl ⟩
+--                                                                        morph f nA ∙C morph g x
+--                                                                        ≅⟨ cong (_∙C morph g x) (preserves-unit f) ⟩
+--                                                                        ε C ∙C morph g x
+--                                                                        ≅⟨ lid C ⟩
+--                                                                        morph g x
+--                                                                        ∎))
+--                      law3 : {A B C : Monoid} → {f : mon-hom  A C} {g : mon-hom B C} {h : mon-hom (MonProd A B) C} → mon-hom-op h inj1 ≅ f → mon-hom-op h inj2 ≅ g → h ≅ [ f , g ]
+--                      law3 {A} {B} {C} {f} {g} {h} eq1 eq2 = let open Monoid C using () renaming (_∙_ to _∙C_) in
+--                                                             mon-hom-eq (ext (λ x → {!   !}))
+
+record Commutative : Set₁ where
+  constructor comm
+  field
+    monoid : Monoid
+    cond : {x y : Carrier monoid} → _∙_ monoid x y ≅ _∙_ monoid y x
+open Commutative
+
+comm-hom : (M N : Commutative) → Set₀
+comm-hom M N = mon-hom (monoid M) (monoid N)
+
+CommCatMon : Cat
+CommCatMon = record
+             { Obj = Commutative
+             ; Hom = comm-hom
+             ; iden = monhom id refl refl
+             ; _∙_ = mon-hom-op
+             ; idl = mon-hom-eq refl
+             ; idr = mon-hom-eq refl
+             ; ass = mon-hom-eq refl
+             }
+
+open import Categories.Coproducts CommCatMon
+
+CommMonProd : (M N : Commutative) → Commutative
+CommMonProd M N = comm (MonProd (monoid M) (monoid N)) (cong₂ _,_ (cond M) (cond N))
+
+CommCoprod : Coproducts
+CommCoprod = coproduct
+             CommMonProd
+             (λ {A} {B} → inj1 {A} {B})
+             (λ {A} {B} → inj2 {A} {B})
+             (λ {A} {B} {C} → [_,_] {A} {B} {C})
+             (λ {A} {B} {C} {f} {g} → law1 {A} {B} {C} {f} {g})
+             (λ {A} {B} {C} {f} {g} → law2 {A} {B} {C} {f} {g})
+             (λ {A} {B} {C} {f} {g} {h} → law3 {A} {B} {C} {f} {g} {h})
+              where inj1 : {A B : Commutative} → comm-hom A (CommMonProd A B)
+                    inj1 {A} {B} = let open Monoid (monoid A) using () renaming (_∙_ to _∙A_)
+                                       open Monoid (monoid B) using () renaming (ε to εB ; lid to lidB)
+                                   in monhom (_, εB) refl (cong ((_ ∙A _) ,_) (sym lidB))
+                    inj2 : {A B : Commutative} → comm-hom B (CommMonProd A B)
+                    inj2 {A} {B} = let open Monoid (monoid A) using () renaming (ε to εA ; lid to lidA)
+                                       open Monoid (monoid B) using () renaming (_∙_ to _∙B_)
+                                   in monhom (εA ,_) refl (cong (_, (_ ∙B _)) (sym lidA))
+                    [_,_] : {A B C : Commutative} → comm-hom A C → comm-hom B C → comm-hom (CommMonProd A B) C
+                    [_,_] {A} {B} {C} f g = let open Monoid (monoid A) renaming (Carrier to CA; ε to εA ;  _∙_ to _∙A_ ; lid to lidA)
+                                                open Monoid (monoid B) renaming (Carrier to CB; ε to εB ;  _∙_ to _∙B_ ; lid to lidB)
+                                                open Monoid (monoid C) renaming (Carrier to CC; ε to εC ;  _∙_ to _∙C_ ; lid to lidC)
+                                            in monhom (λ {(x , y) → morph f x ∙C morph g y}) (proof morph f εA ∙C morph g εB
+                                                                                                    ≅⟨ cong₂ _∙C_ (preserves-unit f) (preserves-unit g) ⟩
+                                                                                                    εC ∙C εC
+                                                                                                    ≅⟨ lidC ⟩
+                                                                                                    εC
+                                                                                                    ∎)
+                                                                                             (λ {x} {y} → proof
+                                                                                                           morph f (fst x ∙A fst y) ∙C morph g (snd x ∙B snd y)
+                                                                                                          ≅⟨ cong₂ _∙C_ (preserves-mult f) (preserves-mult g) ⟩
+                                                                                                          (morph f (fst x) ∙C morph f (fst y)) ∙C (morph g (snd x) ∙C morph g (snd y))
+                                                                                                          ≅⟨ assoc (monoid C) ⟩
+                                                                                                          morph f (fst x) ∙C (morph f (fst y) ∙C (morph g (snd x) ∙C morph g (snd y)))
+                                                                                                          ≅⟨ cong (morph f (fst x) ∙C_) (sym (assoc (monoid C))) ⟩
+                                                                                                          morph f (fst x) ∙C ((morph f (fst y) ∙C morph g (snd x)) ∙C morph g (snd y))
+                                                                                                          ≅⟨ cong (morph f (fst x) ∙C_) (cong (_∙C morph g (snd y)) (cond C)) ⟩
+                                                                                                          morph f (fst x) ∙C ((morph g (snd x) ∙C morph f (fst y)) ∙C morph g (snd y))
+                                                                                                          ≅⟨ cong (morph f (fst x) ∙C_) (assoc (monoid C)) ⟩
+                                                                                                          morph f (fst x) ∙C (morph g (snd x) ∙C (morph f (fst y) ∙C morph g (snd y)))
+                                                                                                          ≅⟨ sym (assoc (monoid C)) ⟩
+                                                                                                          (morph f (fst x) ∙C morph g (snd x)) ∙C (morph f (fst y) ∙C morph g (snd y))
+                                                                                                          ∎)
+                    law1 : {A B C : Commutative} → {f : comm-hom A C} {g : comm-hom B C} → mon-hom-op ([_,_] {A} {B} {C} f g) (inj1 {A} {B}) ≅ f
+                    law1 {A} {B} {C} {f} {g} = let open Monoid (monoid C) using () renaming (_∙_ to _∙C_ ; ε to εC ; rid to ridC) 
+                                                   open Monoid (monoid B) using () renaming (ε to εB) in
+                                               mon-hom-eq (ext (λ x → proof
+                                                                      morph (mon-hom-op ([_,_] {A} {B} {C} f g) (inj1 {A} {B})) x
+                                                                      ≅⟨ refl ⟩
+                                                                      morph f x ∙C morph g εB
+                                                                      ≅⟨ cong (morph f x ∙C_) (preserves-unit g) ⟩
+                                                                      morph f x ∙C εC
+                                                                      ≅⟨ ridC ⟩
+                                                                      morph f x
+                                                                      ∎))
+                    law2 : {A B C : Commutative} → {f : comm-hom A C} {g : comm-hom B C} → mon-hom-op ([_,_] {A} {B} {C} f g) (inj2 {A} {B}) ≅ g
+                    law2 {A} {B} {C} {f} {g} = let open Monoid (monoid C) using () renaming (_∙_ to _∙C_ ; ε to εC ; lid to lidC) 
+                                                   open Monoid (monoid A) using () renaming (ε to εA) in
+                                               mon-hom-eq (ext (λ x → proof
+                                                                      morph (mon-hom-op ([_,_] {A} {B} {C} f g) (inj2 {A} {B})) x
+                                                                      ≅⟨ refl ⟩
+                                                                      morph f εA ∙C morph g x
+                                                                      ≅⟨ cong (_∙C morph g x) (preserves-unit f) ⟩
+                                                                      εC ∙C morph g x
+                                                                      ≅⟨ lidC ⟩
+                                                                      morph g x
+                                                                      ∎))
+                    law3 : {A B C : Commutative} → {f : comm-hom  A C} {g : comm-hom B C} {h : comm-hom (CommMonProd A B) C} → mon-hom-op h (inj1 {A} {B}) ≅ f → mon-hom-op h (inj2 {A} {B}) ≅ g → h ≅ ([_,_] {A} {B} {C} f g)
+                    law3 {A} {B} {C} {f} {g} {h} eq1 eq2 = let open Monoid (monoid C) using () renaming (_∙_ to _∙C_)
+                                                               open Monoid (monoid A) using () renaming (ε to εA ; _∙_ to _∙A_ ; rid to ridA)
+                                                               open Monoid (monoid B) using () renaming (ε to εB ; _∙_ to _∙B_ ; lid to lidB)
+                                                               open Monoid (monoid (CommMonProd A B)) using () renaming (_∙_ to _∙AB_) in
+                                                           mon-hom-eq (ext (λ {(x , y) → proof morph h (x , y)
+                                                                                               ≅⟨ cong (morph h) (cong₂ _,_ (sym ridA) (sym lidB)) ⟩ -- aparecen identidades
+                                                                                               morph h (x ∙A εA , εB ∙B y)
+                                                                                               ≅⟨ refl ⟩ -- Definicion de producto en el monoide producto
+                                                                                               morph h ((x , εB) ∙AB (εA , y))
+                                                                                               ≅⟨ refl ⟩ -- definicion de injs
+                                                                                               morph h (morph (inj1 {A} {B}) x ∙AB morph (inj2 {A} {B}) y)
+                                                                                               ≅⟨ preserves-mult h ⟩
+                                                                                               morph h (morph (inj1 {A} {B}) x) ∙C morph h (morph (inj2 {A} {B}) y)
+                                                                                               ≅⟨ refl ⟩
+                                                                                               (morph h ∘ morph (inj1 {A} {B})) x ∙C (morph h ∘ morph (inj2 {A} {B})) y
+                                                                                               ≅⟨ cong₂ (λ a b → a x ∙C b y) (cong morph eq1) (cong morph eq2) ⟩
+                                                                                               morph f x ∙C morph g y
+                                                                                               ≅⟨ refl ⟩
+                                                                                               morph ([_,_] {A} {B} {C} f g) (x , y)
+                                                                                               ∎}))
 
 -- ============== INICIALES Y TERMINALES =======================
 
-open import Categories.Initial
 
 unitMon : Monoid
 unitMon = mon ⊤
@@ -188,6 +362,8 @@ unitMon = mon ⊤
               refl
               refl
               refl
+
+open import Categories.Initial
 
 CatMonInit : Initial CatMon unitMon
 CatMonInit = init ifunc
