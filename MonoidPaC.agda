@@ -64,6 +64,18 @@ CatMon = record
 module MonProducts where
     open import Categories.Products CatMon
 
+    --           C
+    --         / | \
+    --        /  |  \
+    --       /   |   \
+    --    f /    |    \ g
+    --     /     |     \
+    --    /      |      \
+    --   /       |⟨f,g⟩   \
+    --  /   π₁   v   π₂   \
+    -- A <----- AxB -----> B
+        
+
     MonProd : (M N : Monoid) → Monoid
     MonProd (mon Carrier₁ _∙₁_ ε₁ lid₁ rid₁ assoc₁) (mon Carrier₂ _∙₂_ ε₂ lid₂ rid₂ assoc₂) =
             mon (Carrier₁ × Carrier₂)
@@ -81,12 +93,31 @@ module MonProducts where
 
     CatMonProd : Products
     CatMonProd = prod MonProd
-                      (monhom fst refl refl)
-                      (monhom snd refl refl)
+                      π₁
+                      π₂
                       HomProd
                       (mon-hom-eq refl)
                       (mon-hom-eq refl)
-                      λ {f = f} {g = g} eq1 eq2 → mon-hom-eq (cong₂ (λ f g x → morph f x , morph g x) eq1 eq2)
+                      proofUnico
+                                where π₁ : {A B : Monoid} → mon-hom (MonProd A B) A
+                                      π₁ = monhom fst refl refl
+                                      π₂ : {A B : Monoid} → mon-hom (MonProd A B) B
+                                      π₂ = monhom snd refl refl
+                                      proofUnico : {A B C : Monoid} {f : mon-hom C A} {g : mon-hom C B} {h : mon-hom C (MonProd A B)} → mon-hom-op π₁ h ≅ f → mon-hom-op π₂ h ≅ g → h ≅ HomProd f g
+                                      proofUnico {_} {_} {_} {f} {g} {h} eq1 eq2 = mon-hom-eq (ext (λ x → proof 
+                                                                                                          morph h x
+                                                                                                          ≅⟨ refl ⟩ -- Expando ambos lados
+                                                                                                          fst (morph h x) , snd (morph h x)
+                                                                                                          ≅⟨ refl ⟩ -- composición de funciones
+                                                                                                          (fst ∘ morph h) x , (snd ∘ morph h) x
+                                                                                                          ≅⟨ refl ⟩ -- es el morph del producto en la categoria
+                                                                                                          morph (mon-hom-op π₁ h) x , morph (mon-hom-op π₂ h) x
+                                                                                                          ≅⟨ cong₂ (λ hf hg → (morph hf) x , (morph hg) x) eq1 eq2 ⟩ -- mon-hom-op πₙ h ≅ πₙ ∙ h 
+                                                                                                          morph f x , morph g x
+                                                                                                          ≅⟨ refl ⟩ -- definición de morph en HomProd
+                                                                                                          morph (HomProd f g) x
+                                                                                                          ∎))
+                                    --   proofUnico eq1 eq2 = mon-hom-eq (ext (λ x → cong₂ (λ f g → morph f x , morph g x) eq1 eq2))
 -- ========================================
 
 
@@ -108,9 +139,18 @@ module MonProducts where
 
 module MonCoproducts where
     open import Data.Sum using (_⊎_) renaming (inj₁ to Inl ; inj₂ to Inr)
-
     open import Categories.Coproducts CatMon
 
+    --           C
+    --         / ∧ \
+    --        /  |  \
+    --       /   |   \
+    --    f /    |    \ g
+    --     /     |     \
+    --    /      |      \
+    --   /       |[f,g]  \
+    --  / inj₁   |   inj₂ \
+    -- A -----> A+B <----- B
 
     MonCoprod : (M N : Monoid) → Monoid
     MonCoprod (mon Carrier₁ _∙₁_ ε₁ lid₁ rid₁ assoc₁) (mon Carrier₂ _∙₂_ ε₂ lid₂ rid₂ assoc₂) =
@@ -147,6 +187,17 @@ module MonCoproducts where
 module MonCoproducts2 where
     open import Categories.Coproducts CatMon
     open MonProducts
+
+    --           C
+    --         / ∧ \
+    --        /  |  \
+    --       /   |   \
+    --    f /    |    \ g
+    --     /     |     \
+    --    /      |      \
+    --   /       |[f,g]  \
+    --  / inj₁   |   inj₂ \
+    -- A -----> A+B <----- B
 
     MonCoprod : Coproducts
     MonCoprod = coproduct
@@ -237,6 +288,17 @@ module MonCoproducts2 where
 
 module MonCoproducts3 where
     open MonProducts
+
+    --           C
+    --         / ∧ \
+    --        /  |  \
+    --       /   |   \
+    --    f /    |    \ g
+    --     /     |     \
+    --    /      |      \
+    --   /       |[f,g]  \
+    --  / inj₁   |   inj₂ \
+    -- A -----> A+B <----- B
 
     record Commutative : Set₁ where
         constructor comm
@@ -386,6 +448,9 @@ unitMon = mon ⊤
 
 open import Categories.Initial
 
+-- i : ∀{X} → Hom C I X
+-- law : ∀{X}{f : Hom C I X} → i {X} ≅ f 
+
 CatMonInit : Initial CatMon unitMon
 CatMonInit = init
                 ifunc
@@ -394,8 +459,11 @@ CatMonInit = init
                   ifunc {X} = monhom (λ {tt → ε X}) refl (sym (lid X))
                   demfunc : {X : Monoid} → {f : mon-hom unitMon X} → ifunc {X} ≅ f
                   demfunc {X} {f} = mon-hom-eq (ext (λ {tt → sym (preserves-unit f)}))
--- 
+--
 open import Categories.Terminal
+
+-- t : ∀{X} → Hom C X T
+-- law : ∀{X}{f : Hom C X T} → t {X} ≅ f
 
 CatMonTerm : Terminal CatMon unitMon
 CatMonTerm = term
