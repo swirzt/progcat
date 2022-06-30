@@ -473,3 +473,31 @@ CatMonTerm : Terminal CatMon unitMon
 CatMonTerm = term
                 (monhom (λ- tt) refl refl)
                 (mon-hom-eq (ext (λ- refl)))
+--- =========
+
+{-
+La categoría de monoides tiene el mismo objeto terminal e inicial.
+Cuando esto ocurre se lo llama objeto zero.
+
+Un categoría con un objeto zero se la suele llamar pointed 
+
+-}
+
+record Pointed {a} {b} (C : Cat {a} {b}) : Set (a ⊔ b) where
+    constructor point
+    open Cat C
+    field zero : Obj
+          icond : Initial C zero
+          tcond : Terminal C zero
+open Pointed
+
+MonPoint : Pointed CatMon
+MonPoint = point unitMon CatMonInit CatMonTerm
+
+-- Propiedad de pointed
+-- Para cada par de Objetos A B existe un unico zeromorphismo A → 0 → B
+
+open Cat
+ZeroMorph : ∀{a b} {C : Cat {a} {b}} → (c : Pointed C) → (A B : Obj C) → Hom C A B
+ZeroMorph {C = C} (point zero₁ icond₁ tcond₁) a b = let open Cat C using () renaming (_∙_ to _∙C_)
+                                                    in (Initial.i icond₁) ∙C (Terminal.t tcond₁)
