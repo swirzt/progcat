@@ -1,4 +1,4 @@
-module MonoidPaC where
+module MonoidDem where
 
 open import Categories
 open import Library
@@ -45,10 +45,12 @@ mon-hom-op {X} {Y} {Z} (monhom morphG unitG multG) (monhom morphF unitF multF) =
                                 ≅⟨ multG ⟩
                                 morphG (morphF x) ∙Z morphG (morphF y)
                                 ∎
+-- =======
 
 mon-hom-eq : {X Y : Monoid} {h h' : mon-hom X Y} → morph h ≅ morph h' → h ≅ h'
 mon-hom-eq {X} {Y} {monhom morphG unitG multG} {monhom .morphG unitF multF} refl =
            cong₂ (monhom morphG) (ir unitG unitF) (i2ir multG multF)
+-- ======
 
 CatMon : Cat
 CatMon = record
@@ -60,6 +62,8 @@ CatMon = record
             ; idr = mon-hom-eq refl
             ; ass = mon-hom-eq refl
             }
+
+-- ============== PRODUCTO Y COPRODUCTO =======================
 
 module MonProducts where
     open import Categories.Products CatMon
